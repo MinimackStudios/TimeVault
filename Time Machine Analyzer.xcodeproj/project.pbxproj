@@ -1,0 +1,492 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 71;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A001 /* TimeMachineAnalyzerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B001 /* TimeMachineAnalyzerApp.swift */; };
+		A002 /* AppError.swift in Sources */ = {isa = PBXBuildFile; fileRef = B002 /* AppError.swift */; };
+		A003 /* BackupSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = B003 /* BackupSnapshot.swift */; };
+		A004 /* ComparisonSummary.swift in Sources */ = {isa = PBXBuildFile; fileRef = B004 /* ComparisonSummary.swift */; };
+		A005 /* FileChange.swift in Sources */ = {isa = PBXBuildFile; fileRef = B005 /* FileChange.swift */; };
+		A006 /* FileMetadata.swift in Sources */ = {isa = PBXBuildFile; fileRef = B006 /* FileMetadata.swift */; };
+		A007 /* ComparisonEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = B007 /* ComparisonEngine.swift */; };
+		A008 /* ComparisonService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B008 /* ComparisonService.swift */; };
+		A009 /* FileScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = B009 /* FileScanner.swift */; };
+		A010 /* FileSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = B010 /* FileSystem.swift */; };
+		A011 /* PermissionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B011 /* PermissionService.swift */; };
+		A012 /* ExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B012 /* ExportService.swift */; };
+		A013 /* PreferencesStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B013 /* PreferencesStore.swift */; };
+		A014 /* SecurityScopedBookmarkStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B014 /* SecurityScopedBookmarkStore.swift */; };
+		A015 /* SnapshotDiscovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = B015 /* SnapshotDiscovery.swift */; };
+		A016 /* DeveloperFixtureGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = B016 /* DeveloperFixtureGenerator.swift */; };
+		A017 /* PathNormalizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = B017 /* PathNormalizer.swift */; };
+		A018 /* AppViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B018 /* AppViewModel.swift */; };
+		A019 /* ComparisonResultsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B019 /* ComparisonResultsView.swift */; };
+		A020 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B020 /* ContentView.swift */; };
+		A021 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B021 /* SettingsView.swift */; };
+		A022 /* SnapshotSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B022 /* SnapshotSelectionView.swift */; };
+		A023 /* ComparisonEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B023 /* ComparisonEngineTests.swift */; };
+		A024 /* FileScannerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B024 /* FileScannerTests.swift */; };
+		A025 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B025 /* AboutView.swift */; };
+		A028 /* Time Machine Analyzer.icon in Resources */ = {isa = PBXBuildFile; fileRef = E73797CF3010107600408BFA /* Time Machine Analyzer.icon */; };
+		A029 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B026 /* Assets.xcassets */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		I002 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = J001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F001;
+			remoteInfo = "Time Machine Analyzer";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		B001 /* TimeMachineAnalyzerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeMachineAnalyzerApp.swift; sourceTree = "<group>"; };
+		B002 /* AppError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppError.swift; sourceTree = "<group>"; };
+		B003 /* BackupSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupSnapshot.swift; sourceTree = "<group>"; };
+		B004 /* ComparisonSummary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComparisonSummary.swift; sourceTree = "<group>"; };
+		B005 /* FileChange.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileChange.swift; sourceTree = "<group>"; };
+		B006 /* FileMetadata.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileMetadata.swift; sourceTree = "<group>"; };
+		B007 /* ComparisonEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComparisonEngine.swift; sourceTree = "<group>"; };
+		B008 /* ComparisonService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComparisonService.swift; sourceTree = "<group>"; };
+		B009 /* FileScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileScanner.swift; sourceTree = "<group>"; };
+		B010 /* FileSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileSystem.swift; sourceTree = "<group>"; };
+		B011 /* PermissionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionService.swift; sourceTree = "<group>"; };
+		B012 /* ExportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportService.swift; sourceTree = "<group>"; };
+		B013 /* PreferencesStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesStore.swift; sourceTree = "<group>"; };
+		B014 /* SecurityScopedBookmarkStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecurityScopedBookmarkStore.swift; sourceTree = "<group>"; };
+		B015 /* SnapshotDiscovery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotDiscovery.swift; sourceTree = "<group>"; };
+		B016 /* DeveloperFixtureGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeveloperFixtureGenerator.swift; sourceTree = "<group>"; };
+		B017 /* PathNormalizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PathNormalizer.swift; sourceTree = "<group>"; };
+		B018 /* AppViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppViewModel.swift; sourceTree = "<group>"; };
+		B019 /* ComparisonResultsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComparisonResultsView.swift; sourceTree = "<group>"; };
+		B020 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		B021 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		B022 /* SnapshotSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotSelectionView.swift; sourceTree = "<group>"; };
+		B023 /* ComparisonEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComparisonEngineTests.swift; sourceTree = "<group>"; };
+		B024 /* FileScannerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileScannerTests.swift; sourceTree = "<group>"; };
+		B025 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
+		B026 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		C001 /* Time Machine Analyzer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Time Machine Analyzer.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		C002 /* Time Machine Analyzer Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Time Machine Analyzer Tests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		E73797CF3010107600408BFA /* Time Machine Analyzer.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = "Time Machine Analyzer.icon"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		D001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D002 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		E001 = {
+			isa = PBXGroup;
+			children = (
+				E002 /* App */,
+				E009 /* Models */,
+				E010 /* Services */,
+				E011 /* Utilities */,
+				E012 /* ViewModels */,
+				E013 /* Views */,
+				E014 /* Tests */,
+				E015 /* Products */,
+				E73797CF3010107600408BFA /* Time Machine Analyzer.icon */,
+				B026 /* Assets.xcassets */,
+			);
+			sourceTree = "<group>";
+		};
+		E002 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				B001 /* TimeMachineAnalyzerApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		E004 /* Comparison */ = {
+			isa = PBXGroup;
+			children = (
+				B007 /* ComparisonEngine.swift */,
+				B008 /* ComparisonService.swift */,
+			);
+			path = Comparison;
+			sourceTree = "<group>";
+		};
+		E005 /* FileScanning */ = {
+			isa = PBXGroup;
+			children = (
+				B009 /* FileScanner.swift */,
+				B010 /* FileSystem.swift */,
+			);
+			path = FileScanning;
+			sourceTree = "<group>";
+		};
+		E006 /* Permissions */ = {
+			isa = PBXGroup;
+			children = (
+				B011 /* PermissionService.swift */,
+			);
+			path = Permissions;
+			sourceTree = "<group>";
+		};
+		E007 /* Persistence */ = {
+			isa = PBXGroup;
+			children = (
+				B012 /* ExportService.swift */,
+				B013 /* PreferencesStore.swift */,
+				B014 /* SecurityScopedBookmarkStore.swift */,
+			);
+			path = Persistence;
+			sourceTree = "<group>";
+		};
+		E008 /* SnapshotDiscovery */ = {
+			isa = PBXGroup;
+			children = (
+				B015 /* SnapshotDiscovery.swift */,
+			);
+			path = SnapshotDiscovery;
+			sourceTree = "<group>";
+		};
+		E009 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				B002 /* AppError.swift */,
+				B003 /* BackupSnapshot.swift */,
+				B004 /* ComparisonSummary.swift */,
+				B005 /* FileChange.swift */,
+				B006 /* FileMetadata.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		E010 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				E004 /* Comparison */,
+				E005 /* FileScanning */,
+				E006 /* Permissions */,
+				E007 /* Persistence */,
+				E008 /* SnapshotDiscovery */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		E011 /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				B016 /* DeveloperFixtureGenerator.swift */,
+				B017 /* PathNormalizer.swift */,
+			);
+			path = Utilities;
+			sourceTree = "<group>";
+		};
+		E012 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				B018 /* AppViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		E013 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				B019 /* ComparisonResultsView.swift */,
+				B020 /* ContentView.swift */,
+				B021 /* SettingsView.swift */,
+				B022 /* SnapshotSelectionView.swift */,
+				B025 /* AboutView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		E014 /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				B023 /* ComparisonEngineTests.swift */,
+				B024 /* FileScannerTests.swift */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
+		E015 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				C001 /* Time Machine Analyzer.app */,
+				C002 /* Time Machine AnalyzerTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		F001 /* Time Machine Analyzer */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = G001 /* Build configuration list for PBXNativeTarget "Time Machine Analyzer" */;
+			buildPhases = (
+				H001 /* Sources */,
+				D001 /* Frameworks */,
+				H002 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "Time Machine Analyzer";
+			productName = "Time Machine Analyzer";
+			productReference = C001 /* Time Machine Analyzer.app */;
+			productType = "com.apple.product-type.application";
+		};
+		F002 /* Time Machine Analyzer Tests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = G002 /* Build configuration list for PBXNativeTarget "Time Machine Analyzer Tests" */;
+			buildPhases = (
+				H003 /* Sources */,
+				D002 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				I001 /* PBXTargetDependency */,
+			);
+			name = "Time Machine Analyzer Tests";
+			productName = "Time Machine Analyzer Tests";
+			productReference = C002 /* Time Machine Analyzer Tests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		J001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 2660;
+				TargetAttributes = {
+					F001 = {
+						CreatedOnToolsVersion = 26.6;
+					};
+					F002 = {
+						CreatedOnToolsVersion = 26.6;
+						TestTargetID = F001;
+					};
+				};
+			};
+			buildConfigurationList = G003 /* Build configuration list for PBXProject "Time Machine Analyzer" */;
+			compatibilityVersion = "Xcode 16.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = E001;
+			productRefGroup = E015 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				F001 /* Time Machine Analyzer */,
+				F002 /* Time Machine Analyzer Tests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		H002 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A028 /* Time Machine Analyzer.icon in Resources */,
+				A029 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		H001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A001 /* TimeMachineAnalyzerApp.swift in Sources */,
+				A002 /* AppError.swift in Sources */,
+				A003 /* BackupSnapshot.swift in Sources */,
+				A004 /* ComparisonSummary.swift in Sources */,
+				A005 /* FileChange.swift in Sources */,
+				A006 /* FileMetadata.swift in Sources */,
+				A007 /* ComparisonEngine.swift in Sources */,
+				A008 /* ComparisonService.swift in Sources */,
+				A009 /* FileScanner.swift in Sources */,
+				A010 /* FileSystem.swift in Sources */,
+				A011 /* PermissionService.swift in Sources */,
+				A012 /* ExportService.swift in Sources */,
+				A013 /* PreferencesStore.swift in Sources */,
+				A014 /* SecurityScopedBookmarkStore.swift in Sources */,
+				A015 /* SnapshotDiscovery.swift in Sources */,
+				A016 /* DeveloperFixtureGenerator.swift in Sources */,
+				A017 /* PathNormalizer.swift in Sources */,
+				A018 /* AppViewModel.swift in Sources */,
+				A019 /* ComparisonResultsView.swift in Sources */,
+				A020 /* ContentView.swift in Sources */,
+				A021 /* SettingsView.swift in Sources */,
+				A022 /* SnapshotSelectionView.swift in Sources */,
+				A025 /* AboutView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		H003 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A023 /* ComparisonEngineTests.swift in Sources */,
+				A024 /* FileScannerTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		I001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F001 /* Time Machine Analyzer */;
+			targetProxy = I002 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		K001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "Time Machine Analyzer";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				CURRENT_PROJECT_VERSION = 1.0.0;
+				ENABLE_TESTABILITY = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Time Machine Analyzer";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.minimackstudios.TimeMachineAnalyzer;
+				PRODUCT_MODULE_NAME = TimeMachineAnalyzer;
+				PRODUCT_NAME = "Time Machine Analyzer";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		K002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "Time Machine Analyzer";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				CURRENT_PROJECT_VERSION = 1.0.0;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Time Machine Analyzer";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.minimackstudios.TimeMachineAnalyzer;
+				PRODUCT_MODULE_NAME = TimeMachineAnalyzer;
+				PRODUCT_NAME = "Time Machine Analyzer";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		K003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.minimackstudios.TimeMachineAnalyzerTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Time Machine Analyzer.app/Contents/MacOS/Time Machine Analyzer";
+			};
+			name = Debug;
+		};
+		K004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.minimackstudios.TimeMachineAnalyzerTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Time Machine Analyzer.app/Contents/MacOS/Time Machine Analyzer";
+			};
+			name = Release;
+		};
+		K005 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+			};
+			name = Debug;
+		};
+		K006 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		G001 /* Build configuration list for PBXNativeTarget "Time Machine Analyzer" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				K001 /* Debug */,
+				K002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		G002 /* Build configuration list for PBXNativeTarget "Time Machine Analyzer Tests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				K003 /* Debug */,
+				K004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		G003 /* Build configuration list for PBXProject "Time Machine Analyzer" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				K005 /* Debug */,
+				K006 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = J001 /* Project object */;
+}
