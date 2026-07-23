@@ -1,6 +1,6 @@
 import Foundation
 import XCTest
-@testable import TimeMachineAnalyzer
+@testable import TimeVault
 
 final class FileScannerTests: XCTestCase {
     func testCancellationIsReported() async throws {

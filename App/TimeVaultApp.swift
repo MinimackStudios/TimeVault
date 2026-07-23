@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 
 @main
-struct TimeMachineAnalyzerApp: App {
+struct TimeVaultApp: App {
     @StateObject private var viewModel = AppViewModel()
     @State private var showingAbout = false
 
@@ -11,7 +11,7 @@ struct TimeMachineAnalyzerApp: App {
     }
 
     var body: some Scene {
-        WindowGroup("Time Machine Analyzer") {
+        WindowGroup("TimeVault") {
             ContentView(viewModel: viewModel)
                 .frame(minWidth: 980, minHeight: 640)
                 .sheet(isPresented: $showingAbout) {
@@ -23,7 +23,7 @@ struct TimeMachineAnalyzerApp: App {
         .defaultSize(width: 1_880, height: 1_080)
         .commands {
             CommandGroup(replacing: .appInfo) {
-                Button("About Time Machine Analyzer") {
+                Button("About TimeVault") {
                     showingAbout = true
                 }
             }

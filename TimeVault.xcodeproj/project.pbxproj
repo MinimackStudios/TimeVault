@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		A001 /* TimeMachineAnalyzerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B001 /* TimeMachineAnalyzerApp.swift */; };
+		A001 /* TimeVaultApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B001 /* TimeVaultApp.swift */; };
 		A002 /* AppError.swift in Sources */ = {isa = PBXBuildFile; fileRef = B002 /* AppError.swift */; };
 		A003 /* BackupSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = B003 /* BackupSnapshot.swift */; };
 		A004 /* ComparisonSummary.swift in Sources */ = {isa = PBXBuildFile; fileRef = B004 /* ComparisonSummary.swift */; };
@@ -42,12 +42,12 @@
 			containerPortal = J001 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = F001;
-			remoteInfo = "Time Machine Analyzer";
+			remoteInfo = TimeVault;
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		B001 /* TimeMachineAnalyzerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeMachineAnalyzerApp.swift; sourceTree = "<group>"; };
+		B001 /* TimeVaultApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeVaultApp.swift; sourceTree = "<group>"; };
 		B002 /* AppError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppError.swift; sourceTree = "<group>"; };
 		B003 /* BackupSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupSnapshot.swift; sourceTree = "<group>"; };
 		B004 /* ComparisonSummary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComparisonSummary.swift; sourceTree = "<group>"; };
@@ -73,8 +73,8 @@
 		B024 /* FileScannerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileScannerTests.swift; sourceTree = "<group>"; };
 		B025 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
 		B026 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		C001 /* Time Machine Analyzer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Time Machine Analyzer.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		C002 /* Time Machine Analyzer Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Time Machine Analyzer Tests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		C001 /* TimeVault.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TimeVault.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C002 /* TimeVaultTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TimeVaultTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E73797CF3010107600408BFA /* Time Machine Analyzer.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = "Time Machine Analyzer.icon"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -115,7 +115,7 @@
 		E002 /* App */ = {
 			isa = PBXGroup;
 			children = (
-				B001 /* TimeMachineAnalyzerApp.swift */,
+				B001 /* TimeVaultApp.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -229,8 +229,8 @@
 		E015 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				C001 /* Time Machine Analyzer.app */,
-				C002 /* Time Machine AnalyzerTests.xctest */,
+				C001 /* TimeVault.app */,
+				C002 /* TimeVaultTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -238,9 +238,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		F001 /* Time Machine Analyzer */ = {
+		F001 /* TimeVault */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = G001 /* Build configuration list for PBXNativeTarget "Time Machine Analyzer" */;
+			buildConfigurationList = G001 /* Build configuration list for PBXNativeTarget "TimeVault" */;
 			buildPhases = (
 				H001 /* Sources */,
 				D001 /* Frameworks */,
@@ -250,14 +250,14 @@
 			);
 			dependencies = (
 			);
-			name = "Time Machine Analyzer";
-			productName = "Time Machine Analyzer";
-			productReference = C001 /* Time Machine Analyzer.app */;
+			name = TimeVault;
+			productName = TimeVault;
+			productReference = C001 /* TimeVault.app */;
 			productType = "com.apple.product-type.application";
 		};
-		F002 /* Time Machine Analyzer Tests */ = {
+		F002 /* TimeVaultTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = G002 /* Build configuration list for PBXNativeTarget "Time Machine Analyzer Tests" */;
+			buildConfigurationList = G002 /* Build configuration list for PBXNativeTarget "TimeVaultTests" */;
 			buildPhases = (
 				H003 /* Sources */,
 				D002 /* Frameworks */,
@@ -267,9 +267,9 @@
 			dependencies = (
 				I001 /* PBXTargetDependency */,
 			);
-			name = "Time Machine Analyzer Tests";
-			productName = "Time Machine Analyzer Tests";
-			productReference = C002 /* Time Machine Analyzer Tests.xctest */;
+			name = TimeVaultTests;
+			productName = TimeVaultTests;
+			productReference = C002 /* TimeVaultTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
@@ -289,7 +289,7 @@
 					};
 				};
 			};
-			buildConfigurationList = G003 /* Build configuration list for PBXProject "Time Machine Analyzer" */;
+			buildConfigurationList = G003 /* Build configuration list for PBXProject "TimeVault" */;
 			compatibilityVersion = "Xcode 16.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -301,8 +301,8 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				F001 /* Time Machine Analyzer */,
-				F002 /* Time Machine Analyzer Tests */,
+				F001 /* TimeVault */,
+				F002 /* TimeVaultTests */,
 			);
 		};
 /* End PBXProject section */
@@ -324,7 +324,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A001 /* TimeMachineAnalyzerApp.swift in Sources */,
+				A001 /* TimeVaultApp.swift in Sources */,
 				A002 /* AppError.swift in Sources */,
 				A003 /* BackupSnapshot.swift in Sources */,
 				A004 /* ComparisonSummary.swift in Sources */,
@@ -364,7 +364,7 @@
 /* Begin PBXTargetDependency section */
 		I001 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = F001 /* Time Machine Analyzer */;
+			target = F001 /* TimeVault */;
 			targetProxy = I002 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -378,13 +378,13 @@
 				CURRENT_PROJECT_VERSION = 1.0.0;
 				ENABLE_TESTABILITY = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "Time Machine Analyzer";
+				INFOPLIST_KEY_CFBundleDisplayName = TimeVault;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MARKETING_VERSION = 1.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.minimackstudios.TimeMachineAnalyzer;
-				PRODUCT_MODULE_NAME = TimeMachineAnalyzer;
-				PRODUCT_NAME = "Time Machine Analyzer";
+				PRODUCT_BUNDLE_IDENTIFIER = com.minimackstudios.TimeVault;
+				PRODUCT_MODULE_NAME = TimeVault;
+				PRODUCT_NAME = TimeVault;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 			};
@@ -397,13 +397,13 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CURRENT_PROJECT_VERSION = 1.0.0;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "Time Machine Analyzer";
+				INFOPLIST_KEY_CFBundleDisplayName = TimeVault;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MARKETING_VERSION = 1.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.minimackstudios.TimeMachineAnalyzer;
-				PRODUCT_MODULE_NAME = TimeMachineAnalyzer;
-				PRODUCT_NAME = "Time Machine Analyzer";
+				PRODUCT_BUNDLE_IDENTIFIER = com.minimackstudios.TimeVault;
+				PRODUCT_MODULE_NAME = TimeVault;
+				PRODUCT_NAME = TimeVault;
 				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
@@ -414,10 +414,10 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.minimackstudios.TimeMachineAnalyzerTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.minimackstudios.TimeVaultTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Time Machine Analyzer.app/Contents/MacOS/Time Machine Analyzer";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/TimeVault.app/Contents/MacOS/TimeVault";
 			};
 			name = Debug;
 		};
@@ -427,10 +427,10 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.minimackstudios.TimeMachineAnalyzerTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.minimackstudios.TimeVaultTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Time Machine Analyzer.app/Contents/MacOS/Time Machine Analyzer";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/TimeVault.app/Contents/MacOS/TimeVault";
 			};
 			name = Release;
 		};
@@ -459,7 +459,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		G001 /* Build configuration list for PBXNativeTarget "Time Machine Analyzer" */ = {
+		G001 /* Build configuration list for PBXNativeTarget "TimeVault" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				K001 /* Debug */,
@@ -468,7 +468,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		G002 /* Build configuration list for PBXNativeTarget "Time Machine Analyzer Tests" */ = {
+		G002 /* Build configuration list for PBXNativeTarget "TimeVaultTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				K003 /* Debug */,
@@ -477,7 +477,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		G003 /* Build configuration list for PBXProject "Time Machine Analyzer" */ = {
+		G003 /* Build configuration list for PBXProject "TimeVault" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				K005 /* Debug */,

@@ -1,6 +1,6 @@
- # Time Machine Analyzer
+# TimeVault
 
-Time Machine Analyzer is a read-only macOS app for comparing local Time Machine
+TimeVault is a read-only macOS app for comparing local Time Machine
 backup snapshots. It reports added, removed, modified, and metadata-only items,
 along with logical size changes and the folders responsible for those changes.
 
@@ -14,7 +14,7 @@ The app does not modify, delete, restore, or write to backup content.
 
 ## Build
 
-Open `Time Machine Analyzer.xcodeproj` in Xcode and run the `Time Machine Analyzer`
+Open `TimeVault.xcodeproj` in Xcode and run the `TimeVault`
 scheme. The project is configured to use the included `Time Machine
 Analyzer.icon` asset and targets macOS 13.
 
@@ -22,8 +22,8 @@ For a command-line build:
 
 ```sh
 xcodebuild \
-  -project "Time Machine Analyzer.xcodeproj" \
-  -scheme "Time Machine Analyzer" \
+  -project "TimeVault.xcodeproj" \
+  -scheme "TimeVault" \
   -configuration Debug \
   -sdk macosx \
   build \
@@ -34,8 +34,8 @@ To compile the unit-test target without running it:
 
 ```sh
 xcodebuild \
-  -project "Time Machine Analyzer.xcodeproj" \
-  -scheme "Time Machine Analyzer" \
+  -project "TimeVault.xcodeproj" \
+  -scheme "TimeVault" \
   -configuration Debug \
   -sdk macosx \
   build-for-testing \
@@ -67,12 +67,12 @@ The test suite covers comparison classification, path normalization, symbolic
 links, hard-link accounting, permission failures, snapshot timestamp parsing,
 and scanner cancellation. Tests use local metadata and temporary fixture trees.
 
-Run them from Xcode with the `Time Machine Analyzer Tests` target, or use:
+Run them from Xcode with the `TimeVaultTests` target, or use:
 
 ```sh
 xcodebuild \
-  -project "Time Machine Analyzer.xcodeproj" \
-  -scheme "Time Machine Analyzer" \
+  -project "TimeVault.xcodeproj" \
+  -scheme "TimeVault" \
   -configuration Debug \
   -sdk macosx \
   test \
@@ -81,4 +81,4 @@ xcodebuild \
 
 ## License
 
-Time Machine Analyzer is released under the MIT License. See `LICENSE`.
+TimeVault is released under the MIT License. See `LICENSE`.

@@ -83,7 +83,7 @@ struct WelcomeView: View {
             Image(systemName: "clock.arrow.circlepath")
                 .font(.system(size: 64))
                 .foregroundStyle(.tint)
-            Text("Time Machine Analyzer").font(.largeTitle.bold())
+            Text("TimeVault").font(.largeTitle.bold())
             Text("Compare two read-only backup snapshots to understand what changed, where it changed, and how much logical file data was added or removed.")
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 560)

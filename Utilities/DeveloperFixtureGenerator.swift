@@ -8,7 +8,7 @@ struct DeveloperFixtureGenerator {
     }
 
     static func makeKnownChangePair() throws -> FixturePair {
-        let root = FileManager.default.temporaryDirectory.appendingPathComponent("TimeMachineAnalyzerFixture-\(UUID().uuidString)")
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("TimeVaultFixture-\(UUID().uuidString)")
         let older = root.appendingPathComponent("older")
         let newer = root.appendingPathComponent("newer")
         try FileManager.default.createDirectory(at: older.appendingPathComponent("Documents"), withIntermediateDirectories: true)

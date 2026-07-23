@@ -33,7 +33,7 @@ final class AppViewModel: ObservableObject {
     private let permissions = PermissionService()
     private let bookmarks = SecurityScopedBookmarkStore()
     private let exportService = ExportService()
-    private let logger = Logger(subsystem: "com.example.TimeMachineAnalyzer", category: "workflow")
+    private let logger = Logger(subsystem: "com.minimackstudios.TimeVault", category: "workflow")
     private var comparisonTask: Task<Void, Never>?
     private var activeSecurityScopedURL: URL?
     private var filteredChangesCache: [FileChange] = []

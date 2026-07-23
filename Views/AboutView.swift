@@ -17,10 +17,10 @@ struct AboutView: View {
                 .scaledToFit()
                 .frame(width: 112, height: 112)
                 .shadow(color: .black.opacity(0.16), radius: 5, y: 2)
-                .accessibilityLabel("Time Machine Analyzer icon")
+                .accessibilityLabel("TimeVault icon")
 
             VStack(spacing: 5) {
-                Text("Time Machine Analyzer")
+                Text("TimeVault")
                     .font(.title.bold())
                 Text(version)
                     .font(.caption)
