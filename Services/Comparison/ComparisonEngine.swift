@@ -109,7 +109,26 @@ struct ComparisonEngine: Sendable {
             logicalBytesModified: uniqueByteTotal(changed, metadata: { $0.newMetadata ?? $0.oldMetadata }),
             duration: duration
         )
-        return SnapshotComparison(olderSnapshot: olderSnapshot, newerSnapshot: newerSnapshot, changes: changes, summary: summary, warnings: [])
+        let folderImpacts = Set(oldFolderSizes.keys)
+            .union(newFolderSizes.keys)
+            .compactMap { path -> FolderImpact? in
+                let oldSize = oldFolderSizes[path] ?? 0
+                let newSize = newFolderSizes[path] ?? 0
+                guard oldSize != newSize else { return nil }
+                return FolderImpact(
+                    relativePath: path,
+                    oldLogicalSize: oldSize,
+                    newLogicalSize: newSize
+                )
+            }
+        return SnapshotComparison(
+            olderSnapshot: olderSnapshot,
+            newerSnapshot: newerSnapshot,
+            changes: changes,
+            folderImpacts: folderImpacts,
+            summary: summary,
+            warnings: []
+        )
     }
 
     private func contentChanged(_ old: FileMetadata, _ new: FileMetadata) -> Bool {

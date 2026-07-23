@@ -55,12 +55,62 @@ final class ComparisonEngineTests: XCTestCase {
     func testHardLinkedFilesAreNotDoubleCountedInLogicalByteSummary() async throws {
         let old: [FileMetadata] = []
         let new = [
-            metadata("one.txt", size: 8, fileIdentifier: 42),
-            metadata("alias.txt", size: 8, fileIdentifier: 42)
+            metadata("Folder", type: .directory),
+            metadata("Folder/one.txt", size: 8, fileIdentifier: 42),
+            metadata("Folder/alias.txt", size: 8, fileIdentifier: 42)
         ]
         let comparison = try await ComparisonEngine().compare(older: old, newer: new, olderSnapshot: snapshot("old"), newerSnapshot: snapshot("new"), duration: 0, progress: { _ in })
         XCTAssertEqual(comparison.summary.logicalBytesAdded, 8)
         XCTAssertEqual(comparison.summary.addedCount, 2)
+        XCTAssertEqual(comparison.folderImpacts.first(where: { $0.relativePath == "Folder" })?.newLogicalSize, 8)
+    }
+
+    func testFolderImpactsRankLogicalGrowthAndReduction() async throws {
+        let old = [
+            metadata("Documents", type: .directory),
+            metadata("Documents/existing.txt", size: 100),
+            metadata("Photos", type: .directory),
+            metadata("Photos/kept.jpg", size: 100),
+            metadata("Photos/removed.jpg", size: 300),
+            metadata("Stable", type: .directory),
+            metadata("Stable/old.dat", size: 200)
+        ]
+        let new = [
+            metadata("Documents", type: .directory),
+            metadata("Documents/existing.txt", size: 100),
+            metadata("Documents/added.dat", size: 500),
+            metadata("Photos", type: .directory),
+            metadata("Photos/kept.jpg", size: 100),
+            metadata("Stable", type: .directory),
+            metadata("Stable/new.dat", size: 200)
+        ]
+
+        let comparison = try await ComparisonEngine().compare(
+            older: old,
+            newer: new,
+            olderSnapshot: snapshot("old"),
+            newerSnapshot: snapshot("new"),
+            duration: 0,
+            progress: { _ in }
+        )
+
+        XCTAssertEqual(comparison.folderImpacts.count, 2)
+        XCTAssertEqual(
+            comparison.topFolderImpacts(limit: 10, rankedBy: .largestChange).map(\.relativePath),
+            ["Documents", "Photos"]
+        )
+        XCTAssertEqual(
+            comparison.topFolderImpacts(limit: 10, rankedBy: .largestIncrease).map(\.relativePath),
+            ["Documents"]
+        )
+        XCTAssertEqual(
+            comparison.topFolderImpacts(limit: 10, rankedBy: .largestDecrease).map(\.relativePath),
+            ["Photos"]
+        )
+        XCTAssertEqual(
+            comparison.topFolderImpacts(limit: 1, rankedBy: .largestChange).first?.logicalSizeDifference,
+            500
+        )
     }
 
     func testUnreadablePathProducesPermissionError() {

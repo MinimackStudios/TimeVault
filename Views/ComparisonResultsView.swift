@@ -3,6 +3,7 @@ import SwiftUI
 
 struct ComparisonResultsView: View {
     @ObservedObject var viewModel: AppViewModel
+    @State private var selectedView: ComparisonResultsSection = .changes
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -20,19 +21,34 @@ struct ComparisonResultsView: View {
                     }
                 }
                 SummaryHeader(summary: comparison.summary)
-                ChartSummary(summary: comparison.summary)
-                HStack {
-                    TextField("Search paths", text: $viewModel.searchText)
-                        .textFieldStyle(.roundedBorder)
-                        .frame(maxWidth: 300)
-                    Picker("Filter", selection: $viewModel.filter) {
-                        ForEach(ChangeFilter.allCases) { Text($0.rawValue).tag($0) }
+                Picker("Results view", selection: $selectedView) {
+                    ForEach(ComparisonResultsSection.allCases) { section in
+                        Label(section.rawValue, systemImage: section.systemImage)
+                            .tag(section)
                     }
-                    .frame(width: 140)
-                    Spacer()
-                    Text("\(viewModel.filteredChanges.count) shown").foregroundStyle(.secondary)
                 }
-                ResultsTable(viewModel: viewModel)
+                .pickerStyle(.segmented)
+                .frame(width: 320)
+                .accessibilityLabel("Results view")
+
+                switch selectedView {
+                case .changes:
+                    ChartSummary(summary: comparison.summary)
+                    HStack {
+                        TextField("Search paths", text: $viewModel.searchText)
+                            .textFieldStyle(.roundedBorder)
+                            .frame(maxWidth: 300)
+                        Picker("Filter", selection: $viewModel.filter) {
+                            ForEach(ChangeFilter.allCases) { Text($0.rawValue).tag($0) }
+                        }
+                        .frame(width: 140)
+                        Spacer()
+                        Text("\(viewModel.filteredChanges.count) shown").foregroundStyle(.secondary)
+                    }
+                    ResultsTable(viewModel: viewModel)
+                case .folderImpact:
+                    FolderImpactView(comparison: comparison)
+                }
             } else {
                 if #available(macOS 14.0, *) {
                     ContentUnavailableView("No comparison yet", systemImage: "arrow.left.and.right", description: Text("Choose two snapshots to begin."))
@@ -52,6 +68,20 @@ struct ComparisonResultsView: View {
             }
         }
         .padding()
+    }
+}
+
+private enum ComparisonResultsSection: String, CaseIterable, Identifiable {
+    case changes = "All changes"
+    case folderImpact = "Folder impact"
+
+    var id: Self { self }
+
+    var systemImage: String {
+        switch self {
+        case .changes: return "list.bullet.rectangle"
+        case .folderImpact: return "chart.bar.xaxis"
+        }
     }
 }
 
@@ -104,6 +134,136 @@ private struct ChartSummary: View {
             .frame(height: 120)
         }
         .padding(.vertical, 4)
+    }
+}
+
+private struct FolderImpactView: View {
+    let comparison: SnapshotComparison
+    @State private var ranking: FolderImpactRanking = .largestChange
+    @State private var limit = 10
+
+    private var impacts: [FolderImpact] {
+        comparison.topFolderImpacts(limit: limit, rankedBy: ranking)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .bottom) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Top changing folders")
+                        .font(.title2.bold())
+                    Text("Cumulative logical sizes include each folder's descendants. They do not represent physical APFS storage usage.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Picker("Rank by", selection: $ranking) {
+                    ForEach(FolderImpactRanking.allCases) { option in
+                        Text(option.rawValue).tag(option)
+                    }
+                }
+                .frame(width: 180)
+                Picker("Show", selection: $limit) {
+                    ForEach([10, 25, 50, 100], id: \.self) { count in
+                        Text("Top \(count)").tag(count)
+                    }
+                }
+                .frame(width: 110)
+            }
+
+            if impacts.isEmpty {
+                if #available(macOS 14.0, *) {
+                    ContentUnavailableView(
+                        "No folder size impact",
+                        systemImage: "folder",
+                        description: Text("No folders have a logical size change for this ranking.")
+                    )
+                } else {
+                    VStack(spacing: 8) {
+                        Image(systemName: "folder")
+                            .font(.largeTitle)
+                            .foregroundStyle(.secondary)
+                        Text("No folder size impact")
+                            .font(.headline)
+                        Text("No folders have a logical size change for this ranking.")
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 32)
+                }
+            } else {
+                FolderImpactTable(impacts: impacts)
+            }
+        }
+    }
+}
+
+private struct FolderImpactTable: View {
+    let impacts: [FolderImpact]
+
+    var body: some View {
+        Table(impacts) {
+            TableColumn("#") { impact in
+                Text(rank(for: impact), format: .number)
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
+            }
+            .width(32)
+            TableColumn("Folder") { impact in
+                Label(impact.relativePath, systemImage: "folder")
+                    .lineLimit(1)
+                    .help(impact.relativePath)
+            }
+            .width(min: 240, ideal: 420)
+            TableColumn("Before") { impact in
+                Text(formatBytes(impact.oldLogicalSize))
+                    .monospacedDigit()
+            }
+            .width(min: 90, ideal: 110)
+            TableColumn("After") { impact in
+                Text(formatBytes(impact.newLogicalSize))
+                    .monospacedDigit()
+            }
+            .width(min: 90, ideal: 110)
+            TableColumn("Increase") { impact in
+                impactAmount(impact.logicalBytesIncreased, color: .green)
+            }
+            .width(min: 90, ideal: 110)
+            TableColumn("Decrease") { impact in
+                impactAmount(impact.logicalBytesDecreased, color: .red)
+            }
+            .width(min: 90, ideal: 110)
+            TableColumn("Difference") { impact in
+                Text(formatSignedBytes(impact.logicalSizeDifference))
+                    .monospacedDigit()
+                    .foregroundStyle(impact.logicalSizeDifference >= 0 ? .green : .red)
+            }
+            .width(min: 95, ideal: 115)
+        }
+    }
+
+    private func rank(for impact: FolderImpact) -> Int {
+        (impacts.firstIndex(of: impact) ?? 0) + 1
+    }
+
+    @ViewBuilder
+    private func impactAmount(_ bytes: UInt64, color: Color) -> some View {
+        if bytes == 0 {
+            Text("-")
+                .foregroundStyle(.tertiary)
+        } else {
+            Text(formatBytes(bytes))
+                .monospacedDigit()
+                .foregroundStyle(color)
+        }
+    }
+
+    private func formatBytes(_ bytes: UInt64) -> String {
+        ByteCountFormatter.string(fromByteCount: Int64(clamping: bytes), countStyle: .file)
+    }
+
+    private func formatSignedBytes(_ bytes: Int64) -> String {
+        bytes == 0 ? "0 bytes" : (bytes > 0 ? "+" : "") + ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
     }
 }
 

@@ -44,6 +44,7 @@ struct ComparisonService: Sendable {
             olderSnapshot: comparison.olderSnapshot,
             newerSnapshot: comparison.newerSnapshot,
             changes: comparison.changes,
+            folderImpacts: comparison.folderImpacts,
             summary: summary,
             warnings: comparison.warnings
         )
