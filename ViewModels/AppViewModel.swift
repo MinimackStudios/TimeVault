@@ -112,7 +112,17 @@ final class AppViewModel: ObservableObject {
         guard panel.runModal() == .OK, let url = panel.url else { return }
         let values = try? url.resourceValues(forKeys: [.contentModificationDateKey])
         let date = values?.contentModificationDate ?? Date()
-        let snapshot = BackupSnapshot(date: date, backupVolume: url.deletingLastPathComponent().lastPathComponent, machineName: Host.current().localizedName, url: url, identifier: url.path)
+        let normalizedURL = url.standardizedFileURL
+        let snapshot = snapshots.first(where: { $0.url.standardizedFileURL == normalizedURL }) ?? BackupSnapshot(
+            date: date,
+            backupVolume: url.deletingLastPathComponent().lastPathComponent,
+            machineName: "Custom folder",
+            url: normalizedURL,
+            identifier: normalizedURL.path
+        )
+        if !snapshots.contains(where: { $0.url.standardizedFileURL == normalizedURL }) {
+            snapshots.append(snapshot)
+        }
         if isOlder { olderSnapshot = snapshot } else { newerSnapshot = snapshot }
         section = .snapshots
     }
@@ -209,6 +219,12 @@ final class AppViewModel: ObservableObject {
         let base = change.newMetadata != nil ? newerSnapshot?.url : olderSnapshot?.url
         guard let base else { return }
         NSWorkspace.shared.activateFileViewerSelecting([base.appendingPathComponent(change.relativePath)])
+    }
+
+    func revealFolderImpactInFinder(_ impact: FolderImpact) {
+        let base = impact.newLogicalSize > 0 ? newerSnapshot?.url : olderSnapshot?.url
+        guard let base else { return }
+        NSWorkspace.shared.activateFileViewerSelecting([base.appendingPathComponent(impact.relativePath)])
     }
 
     private func export(extension fileExtension: String, action: (SnapshotComparison, URL) throws -> Void) {

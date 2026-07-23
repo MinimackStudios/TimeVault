@@ -125,6 +125,15 @@ private struct ScanProgressPanel: View {
                         Button("Cancel", role: .cancel, action: cancel)
                     }
 
+                    scanProgressBar
+
+                    if let progress {
+                        Text(progressDescription(for: progress))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .monospacedDigit()
+                    }
+
                     if showDetailedScanProgress, let progress {
                         HStack(spacing: 16) {
                             ProgressMetric(title: progress.phase == "Comparing changes" ? "Paths compared" : "Items scanned", value: progress.itemsScanned.formatted())
@@ -146,6 +155,36 @@ private struct ScanProgressPanel: View {
     private func elapsedTime(for progress: ScanProgress, at date: Date) -> TimeInterval {
         guard let startedAt = progress.startedAt else { return progress.elapsedTime }
         return max(progress.elapsedTime, date.timeIntervalSince(startedAt))
+    }
+
+    @ViewBuilder
+    private var scanProgressBar: some View {
+        if let progress, let estimatedItemCount = progress.estimatedItemCount, estimatedItemCount > 0 {
+            ProgressView(
+                value: min(Double(progress.itemsScanned), Double(estimatedItemCount)),
+                total: Double(estimatedItemCount)
+            )
+            .progressViewStyle(.linear)
+            .tint(.accentColor)
+            .accessibilityLabel("Comparison progress")
+            .accessibilityValue("\(progress.itemsScanned) of \(estimatedItemCount) items")
+        } else {
+            ProgressView()
+                .progressViewStyle(.linear)
+                .tint(.accentColor)
+                .accessibilityLabel("Comparison scan in progress")
+        }
+    }
+
+    private func progressDescription(for progress: ScanProgress) -> String {
+        guard let estimatedItemCount = progress.estimatedItemCount, estimatedItemCount > 0 else {
+            return "\(progress.itemsScanned.formatted()) items scanned"
+        }
+
+        let completed = min(progress.itemsScanned, estimatedItemCount)
+        let percentage = (Double(completed) / Double(estimatedItemCount)).formatted(.percent.precision(.fractionLength(0)))
+        let itemLabel = progress.phase == "Comparing changes" ? "paths compared" : "items scanned"
+        return "\(completed.formatted()) of \(estimatedItemCount.formatted()) \(itemLabel) (\(percentage))"
     }
 }
 

@@ -47,7 +47,9 @@ struct ComparisonResultsView: View {
                     }
                     ResultsTable(viewModel: viewModel)
                 case .folderImpact:
-                    FolderImpactView(comparison: comparison)
+                    FolderImpactView(comparison: comparison) { impact in
+                        viewModel.revealFolderImpactInFinder(impact)
+                    }
                 }
             } else {
                 if #available(macOS 14.0, *) {
@@ -118,6 +120,33 @@ struct SummaryCard: View {
     }
 }
 
+private struct SizeDifferenceLabel: View {
+    let difference: Int64
+
+    var body: some View {
+        Text(label)
+            .monospacedDigit()
+            .foregroundStyle(color)
+            .lineLimit(1)
+    }
+
+    private var label: String {
+        difference == 0 ? "0 bytes" : formatSignedBytes(difference)
+    }
+
+    private var color: Color {
+        switch difference {
+        case let value where value > 0: return .green
+        case let value where value < 0: return .red
+        default: return .secondary
+        }
+    }
+
+    private func formatSignedBytes(_ bytes: Int64) -> String {
+        (bytes > 0 ? "+" : "") + ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
+    }
+}
+
 private struct ChartSummary: View {
     let summary: ComparisonSummary
     private var data: [(String, UInt64)] { [("Added", summary.logicalBytesAdded), ("Removed", summary.logicalBytesRemoved), ("Modified", summary.logicalBytesModified)] }
@@ -139,11 +168,22 @@ private struct ChartSummary: View {
 
 private struct FolderImpactView: View {
     let comparison: SnapshotComparison
+    let revealInFinder: (FolderImpact) -> Void
     @State private var ranking: FolderImpactRanking = .largestChange
     @State private var limit = 10
+    @State private var selectedImpact: String?
+    @State private var sortOrder: [KeyPathComparator<FolderImpact>] = [
+        KeyPathComparator(\.absoluteLogicalChange, order: .reverse)
+    ]
 
     private var impacts: [FolderImpact] {
         comparison.topFolderImpacts(limit: limit, rankedBy: ranking)
+    }
+
+    private var displayedImpacts: [FolderImpact] {
+        var sorted = impacts
+        sorted.sort(using: sortOrder)
+        return sorted
     }
 
     var body: some View {
@@ -156,19 +196,19 @@ private struct FolderImpactView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-                Spacer()
                 Picker("Rank by", selection: $ranking) {
                     ForEach(FolderImpactRanking.allCases) { option in
                         Text(option.rawValue).tag(option)
                     }
                 }
-                .frame(width: 180)
+                .frame(width: 230)
                 Picker("Show", selection: $limit) {
                     ForEach([10, 25, 50, 100], id: \.self) { count in
                         Text("Top \(count)").tag(count)
                     }
                 }
-                .frame(width: 110)
+                .frame(width: 145)
+                Spacer()
             }
 
             if impacts.isEmpty {
@@ -192,7 +232,19 @@ private struct FolderImpactView: View {
                     .padding(.vertical, 32)
                 }
             } else {
-                FolderImpactTable(impacts: impacts)
+                FolderImpactTable(
+                    impacts: displayedImpacts,
+                    selectedImpact: $selectedImpact,
+                    sortOrder: $sortOrder
+                )
+                .contextMenu {
+                    if let selectedImpact,
+                       let impact = displayedImpacts.first(where: { $0.id == selectedImpact }) {
+                        Button("Reveal in Finder", systemImage: "folder") {
+                            revealInFinder(impact)
+                        }
+                    }
+                }
             }
         }
     }
@@ -200,40 +252,42 @@ private struct FolderImpactView: View {
 
 private struct FolderImpactTable: View {
     let impacts: [FolderImpact]
+    @Binding var selectedImpact: String?
+    @Binding var sortOrder: [KeyPathComparator<FolderImpact>]
 
     var body: some View {
-        Table(impacts) {
+        Table(impacts, selection: $selectedImpact, sortOrder: $sortOrder) {
             TableColumn("#") { impact in
                 Text(rank(for: impact), format: .number)
                     .monospacedDigit()
                     .foregroundStyle(.secondary)
             }
             .width(32)
-            TableColumn("Folder") { impact in
+            TableColumn("Folder", sortUsing: KeyPathComparator(\.relativePath)) { impact in
                 Label(impact.relativePath, systemImage: "folder")
                     .lineLimit(1)
                     .help(impact.relativePath)
             }
             .width(min: 240, ideal: 420)
-            TableColumn("Before") { impact in
+            TableColumn("Before", sortUsing: KeyPathComparator(\.oldLogicalSize)) { impact in
                 Text(formatBytes(impact.oldLogicalSize))
                     .monospacedDigit()
             }
             .width(min: 90, ideal: 110)
-            TableColumn("After") { impact in
+            TableColumn("After", sortUsing: KeyPathComparator(\.newLogicalSize)) { impact in
                 Text(formatBytes(impact.newLogicalSize))
                     .monospacedDigit()
             }
             .width(min: 90, ideal: 110)
-            TableColumn("Increase") { impact in
+            TableColumn("Increase", sortUsing: KeyPathComparator(\.logicalBytesIncreased)) { impact in
                 impactAmount(impact.logicalBytesIncreased, color: .green)
             }
             .width(min: 90, ideal: 110)
-            TableColumn("Decrease") { impact in
+            TableColumn("Decrease", sortUsing: KeyPathComparator(\.logicalBytesDecreased)) { impact in
                 impactAmount(impact.logicalBytesDecreased, color: .red)
             }
             .width(min: 90, ideal: 110)
-            TableColumn("Difference") { impact in
+            TableColumn("Difference", sortUsing: KeyPathComparator(\.logicalSizeDifference)) { impact in
                 Text(formatSignedBytes(impact.logicalSizeDifference))
                     .monospacedDigit()
                     .foregroundStyle(impact.logicalSizeDifference >= 0 ? .green : .red)
@@ -279,7 +333,9 @@ struct ResultsTable: View {
             TableColumn("Relative path", value: \.relativePath) { change in Text(change.relativePath).textSelection(.enabled) }
             TableColumn("Old size", sortUsing: KeyPathComparator(\.oldSizeForSorting)) { change in Text(change.oldSize.map(formatBytes) ?? "-").monospacedDigit() }
             TableColumn("New size", sortUsing: KeyPathComparator(\.newSizeForSorting)) { change in Text(change.newSize.map(formatBytes) ?? "-").monospacedDigit() }
-            TableColumn("Difference", value: \.sizeDifference) { change in Text(formatSignedBytes(change.sizeDifference)).monospacedDigit() }
+            TableColumn("Difference", value: \.sizeDifference) { change in
+                SizeDifferenceLabel(difference: change.sizeDifference)
+            }
             TableColumn("Old modified", sortUsing: KeyPathComparator(\.oldModificationDateForSorting)) { change in Text(change.oldMetadata?.modificationDate?.formatted(date: .abbreviated, time: .shortened) ?? "-") }
             TableColumn("New modified", sortUsing: KeyPathComparator(\.newModificationDateForSorting)) { change in Text(change.newMetadata?.modificationDate?.formatted(date: .abbreviated, time: .shortened) ?? "-") }
         }
