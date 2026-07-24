@@ -4,14 +4,14 @@ import OSLog
 import SwiftUI
 
 enum AppSection: Hashable {
-    case welcome
-    case snapshots
+    case dashboard
+    case snapshots(URL?)
     case comparison
 }
 
 @MainActor
 final class AppViewModel: ObservableObject {
-    @Published var section: AppSection = .welcome
+    @Published var section: AppSection = .dashboard
     @Published var mountedVolumes: [URL] = []
     @Published var selectedVolume: URL?
     @Published var snapshots: [BackupSnapshot] = []
@@ -28,11 +28,15 @@ final class AppViewModel: ObservableObject {
     @Published var permissionState: PermissionState = .unknown
     @Published var errorMessage: String?
     @Published var diagnostics: String?
+    @Published var systemOverview: SystemOverview?
+    @Published var localSnapshots: [LocalSnapshot] = []
+    @Published var isRefreshingSystemOverview = false
 
     private let discovery = TimeMachineSnapshotDiscovery()
     private let permissions = PermissionService()
     private let bookmarks = SecurityScopedBookmarkStore()
     private let exportService = ExportService()
+    private let systemStatus = SystemStatusService()
     private let logger = Logger(subsystem: "com.minimackstudios.TimeVault", category: "workflow")
     private var comparisonTask: Task<Void, Never>?
     private var activeSecurityScopedURL: URL?
@@ -42,6 +46,7 @@ final class AppViewModel: ObservableObject {
     init() {
         mountedVolumes = bookmarks.restore()
         refreshMountedVolumes()
+        refreshSystemOverview()
     }
 
     deinit {
@@ -88,6 +93,49 @@ final class AppViewModel: ObservableObject {
         mountedVolumes = candidates.sorted { $0.path < $1.path }
     }
 
+    func refreshSystemOverview() {
+        guard !isRefreshingSystemOverview else { return }
+        isRefreshingSystemOverview = true
+        Task { [weak self] in
+            guard let self else { return }
+            let dashboard = await self.systemStatus.loadDashboard()
+            self.systemOverview = dashboard.overview
+            self.localSnapshots = dashboard.localSnapshots
+            self.isRefreshingSystemOverview = false
+        }
+    }
+
+    func browseLocalSnapshots() {
+        Task { [weak self] in
+            guard let self else { return }
+            do {
+                try await self.systemStatus.browseLocalSnapshots()
+            } catch {
+                self.present(error)
+            }
+        }
+    }
+
+    func navigate(to destination: AppSection) {
+        switch destination {
+        case .snapshots(let volume):
+            section = destination
+            guard let volume else { return }
+            if selectedVolume != volume {
+                selectVolume(volume)
+                discoverSnapshots()
+            } else if snapshots.isEmpty, !isDiscovering {
+                discoverSnapshots()
+            }
+        case .dashboard, .comparison:
+            section = destination
+        }
+    }
+
+    func showSnapshotBrowser() {
+        navigate(to: .snapshots(selectedVolume ?? mountedVolumes.first))
+    }
+
     func chooseBackupVolume() {
         let panel = NSOpenPanel()
         panel.title = "Choose Time Machine Backup Volume"
@@ -99,7 +147,7 @@ final class AppViewModel: ObservableObject {
         selectVolume(url)
         guard case .verified = permissionState else { return }
         try? bookmarks.save(url: url)
-        section = .snapshots
+        section = .snapshots(url)
         discoverSnapshots()
     }
 
@@ -124,7 +172,7 @@ final class AppViewModel: ObservableObject {
             snapshots.append(snapshot)
         }
         if isOlder { olderSnapshot = snapshot } else { newerSnapshot = snapshot }
-        section = .snapshots
+        section = .snapshots(selectedVolume)
     }
 
     func discoverSnapshots() {
@@ -225,6 +273,10 @@ final class AppViewModel: ObservableObject {
         let base = impact.newLogicalSize > 0 ? newerSnapshot?.url : olderSnapshot?.url
         guard let base else { return }
         NSWorkspace.shared.activateFileViewerSelecting([base.appendingPathComponent(impact.relativePath)])
+    }
+
+    func revealSnapshotInFinder(_ snapshot: BackupSnapshot) {
+        NSWorkspace.shared.activateFileViewerSelecting([snapshot.url])
     }
 
     private func export(extension fileExtension: String, action: (SnapshotComparison, URL) throws -> Void) {

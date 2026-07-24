@@ -10,7 +10,7 @@ struct ContentView: View {
         } detail: {
             Group {
                 switch viewModel.section {
-                case .welcome: WelcomeView(viewModel: viewModel)
+                case .dashboard: DashboardView(viewModel: viewModel)
                 case .snapshots: SnapshotSelectionView(viewModel: viewModel)
                 case .comparison: ComparisonResultsView(viewModel: viewModel)
             }
@@ -28,32 +28,30 @@ struct ContentView: View {
 
 struct SidebarView: View {
     @ObservedObject var viewModel: AppViewModel
+    @State private var expandedVolumePaths: Set<String> = []
 
     var body: some View {
-        List(selection: $viewModel.section) {
-            Label("Welcome", systemImage: "house")
+        List(selection: Binding(
+            get: { viewModel.section },
+            set: { viewModel.navigate(to: $0) }
+        )) {
+            Label("Dashboard", systemImage: "rectangle.3.group")
                 .font(.body.weight(.medium))
                 .padding(.vertical, 3)
-                .tag(AppSection.welcome)
+                .tag(AppSection.dashboard)
             Section("Backup drives") {
                 ForEach(viewModel.mountedVolumes, id: \.self) { volume in
-                    Button {
-                        viewModel.selectVolume(volume)
-                        viewModel.section = .snapshots
-                        viewModel.discoverSnapshots()
+                    DisclosureGroup(isExpanded: expansionBinding(for: volume)) {
+                        Label("Snapshot Browser", systemImage: "clock.arrow.circlepath")
+                            .font(.body.weight(.medium))
+                            .padding(.vertical, 3)
+                            .tag(AppSection.snapshots(volume))
                     } label: {
                         Label(volume.lastPathComponent, systemImage: "externaldrive")
                             .font(.body.weight(.medium))
                             .padding(.vertical, 3)
                     }
-                    .buttonStyle(.plain)
                 }
-            }
-            if !viewModel.snapshots.isEmpty {
-                Label("Snapshots", systemImage: "clock.arrow.circlepath")
-                    .font(.body.weight(.medium))
-                    .padding(.vertical, 3)
-                    .tag(AppSection.snapshots)
             }
             if viewModel.comparison != nil {
                 Label("Comparison", systemImage: "arrow.left.and.right")
@@ -65,6 +63,12 @@ struct SidebarView: View {
         .listStyle(.sidebar)
         .environment(\.defaultMinListRowHeight, 38)
         .disabled(viewModel.isComparing || viewModel.isDiscovering)
+        .onAppear {
+            expandedVolumePaths.formUnion(viewModel.mountedVolumes.map(\.path))
+        }
+        .onReceive(viewModel.$mountedVolumes) { volumes in
+            expandedVolumePaths.formUnion(volumes.map(\.path))
+        }
         .safeAreaInset(edge: .bottom) {
             Button { viewModel.refreshMountedVolumes() } label: {
                 Label("Refresh drives", systemImage: "arrow.clockwise")
@@ -73,31 +77,18 @@ struct SidebarView: View {
             .disabled(viewModel.isComparing || viewModel.isDiscovering)
         }
     }
-}
 
-struct WelcomeView: View {
-    @ObservedObject var viewModel: AppViewModel
-
-    var body: some View {
-        VStack(spacing: 22) {
-            Image(systemName: "clock.arrow.circlepath")
-                .font(.system(size: 64))
-                .foregroundStyle(.tint)
-            Text("TimeVault").font(.largeTitle.bold())
-            Text("Compare two read-only backup snapshots to understand what changed, where it changed, and how much logical file data was added or removed.")
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: 560)
-                .foregroundStyle(.secondary)
-            HStack {
-                Button("Choose a backup drive", systemImage: "externaldrive.badge.plus") { viewModel.chooseBackupVolume() }
-                    .buttonStyle(.borderedProminent)
+    private func expansionBinding(for volume: URL) -> Binding<Bool> {
+        Binding(
+            get: { expandedVolumePaths.contains(volume.path) },
+            set: { isExpanded in
+                if isExpanded {
+                    expandedVolumePaths.insert(volume.path)
+                } else {
+                    expandedVolumePaths.remove(volume.path)
+                }
             }
-            Text("The app only reads metadata and never modifies, restores, or deletes backup content.")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-        }
-        .padding(48)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        )
     }
 }
 

@@ -1,8 +1,10 @@
 # TimeVault
 
-TimeVault is a read-only macOS app for comparing local Time Machine
-backup snapshots. It reports added, removed, modified, and metadata-only items,
-along with logical size changes and the folders responsible for those changes.
+TimeVault is a read-only macOS app for understanding Time Machine protection.
+Its dashboard reports backup activity, startup-disk capacity, and local APFS
+snapshot counts. Its snapshot browser shows local snapshots alongside mounted
+backup snapshots, which can be compared to report added, removed, modified,
+and metadata-only items, logical size changes, and the folders responsible.
 
 ## Requirements
 
@@ -11,6 +13,9 @@ along with logical size changes and the folders responsible for those changes.
 - A locally mounted Time Machine backup volume, or manually selected snapshot folders
 
 The app does not modify, delete, restore, or write to backup content.
+
+TimeVault can open Finder at the startup disk and launch the system Time
+Machine browser, where local snapshots can be explored using Apple's timeline.
 
 ## Build
 

@@ -19,7 +19,7 @@ struct TimeVaultApp: App {
                 }
                 .tint(Color(nsColor: .controlAccentColor))
         }
-        .windowResizability(.contentSize)
+        .windowResizability(.contentMinSize)
         .defaultSize(width: 1_880, height: 1_080)
         .commands {
             CommandGroup(replacing: .appInfo) {

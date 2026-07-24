@@ -34,6 +34,10 @@
 		A025 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B025 /* AboutView.swift */; };
 		A028 /* Time Machine Analyzer.icon in Resources */ = {isa = PBXBuildFile; fileRef = E73797CF3010107600408BFA /* Time Machine Analyzer.icon */; };
 		A029 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B026 /* Assets.xcassets */; };
+		A030 /* SystemSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = B027 /* SystemSnapshot.swift */; };
+		A031 /* SystemStatusService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B028 /* SystemStatusService.swift */; };
+		A032 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B029 /* DashboardView.swift */; };
+		A033 /* SystemStatusServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B030 /* SystemStatusServiceTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -73,6 +77,10 @@
 		B024 /* FileScannerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileScannerTests.swift; sourceTree = "<group>"; };
 		B025 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
 		B026 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		B027 /* SystemSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemSnapshot.swift; sourceTree = "<group>"; };
+		B028 /* SystemStatusService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemStatusService.swift; sourceTree = "<group>"; };
+		B029 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		B030 /* SystemStatusServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemStatusServiceTests.swift; sourceTree = "<group>"; };
 		C001 /* TimeVault.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TimeVault.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C002 /* TimeVaultTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TimeVaultTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E73797CF3010107600408BFA /* Time Machine Analyzer.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = "Time Machine Analyzer.icon"; sourceTree = "<group>"; };
@@ -164,6 +172,14 @@
 			path = SnapshotDiscovery;
 			sourceTree = "<group>";
 		};
+		E016 /* SystemStatus */ = {
+			isa = PBXGroup;
+			children = (
+				B028 /* SystemStatusService.swift */,
+			);
+			path = SystemStatus;
+			sourceTree = "<group>";
+		};
 		E009 /* Models */ = {
 			isa = PBXGroup;
 			children = (
@@ -172,6 +188,7 @@
 				B004 /* ComparisonSummary.swift */,
 				B005 /* FileChange.swift */,
 				B006 /* FileMetadata.swift */,
+				B027 /* SystemSnapshot.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -184,6 +201,7 @@
 				E006 /* Permissions */,
 				E007 /* Persistence */,
 				E008 /* SnapshotDiscovery */,
+				E016 /* SystemStatus */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -213,6 +231,7 @@
 				B021 /* SettingsView.swift */,
 				B022 /* SnapshotSelectionView.swift */,
 				B025 /* AboutView.swift */,
+				B029 /* DashboardView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -222,6 +241,7 @@
 			children = (
 				B023 /* ComparisonEngineTests.swift */,
 				B024 /* FileScannerTests.swift */,
+				B030 /* SystemStatusServiceTests.swift */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -347,6 +367,9 @@
 				A021 /* SettingsView.swift in Sources */,
 				A022 /* SnapshotSelectionView.swift in Sources */,
 				A025 /* AboutView.swift in Sources */,
+				A030 /* SystemSnapshot.swift in Sources */,
+				A031 /* SystemStatusService.swift in Sources */,
+				A032 /* DashboardView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -356,6 +379,7 @@
 			files = (
 				A023 /* ComparisonEngineTests.swift in Sources */,
 				A024 /* FileScannerTests.swift in Sources */,
+				A033 /* SystemStatusServiceTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
