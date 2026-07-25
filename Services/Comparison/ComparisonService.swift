@@ -18,13 +18,13 @@ struct ComparisonService: Sendable {
             ))
         }
         let coordinator = ScanCompletionCoordinator(labels: ["Older snapshot", "Newer snapshot"])
-        async let olderRecords = scan(snapshot: olderSnapshot, label: "Older snapshot", coordinator: coordinator, progress: reportProgress)
-        async let newerRecords = scan(snapshot: newerSnapshot, label: "Newer snapshot", coordinator: coordinator, progress: reportProgress)
-        let (old, new) = try await (olderRecords, newerRecords)
+        async let olderScan = scan(snapshot: olderSnapshot, label: "Older snapshot", coordinator: coordinator, progress: reportProgress)
+        async let newerScan = scan(snapshot: newerSnapshot, label: "Newer snapshot", coordinator: coordinator, progress: reportProgress)
+        let (old, new) = try await (olderScan, newerScan)
         try Task.checkCancellation()
         let comparison = try await engine.compare(
-            older: old,
-            newer: new,
+            older: old.records,
+            newer: new.records,
             olderSnapshot: olderSnapshot,
             newerSnapshot: newerSnapshot,
             duration: 0,
@@ -46,23 +46,25 @@ struct ComparisonService: Sendable {
             changes: comparison.changes,
             folderImpacts: comparison.folderImpacts,
             summary: summary,
-            warnings: comparison.warnings
+            warnings: old.warnings.map { "Older snapshot: \($0)" }
+                + new.warnings.map { "Newer snapshot: \($0)" }
+                + comparison.warnings
         )
     }
 
-    private func scan(snapshot: BackupSnapshot, label: String, coordinator: ScanCompletionCoordinator, progress: @escaping @Sendable (ScanProgress) async -> Void) async throws -> [FileMetadata] {
-        var records: [FileMetadata] = []
+    private func scan(snapshot: BackupSnapshot, label: String, coordinator: ScanCompletionCoordinator, progress: @escaping @Sendable (ScanProgress) async -> Void) async throws -> FileScanResult {
+        var result = FileScanResult(records: [], warnings: [])
         for try await event in scanner.events(for: snapshot.url, label: label) {
             switch event {
             case .progress(let value):
                 await coordinator.update(value)
                 await progress(value)
             case .finished(let value):
-                records = value
+                result = value
                 await progress(coordinator.completedProgress(for: label))
             }
         }
-        return records
+        return result
     }
 }
 

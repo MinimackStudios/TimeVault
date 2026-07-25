@@ -21,6 +21,9 @@ struct ComparisonResultsView: View {
                     }
                 }
                 SummaryHeader(summary: comparison.summary)
+                if !comparison.warnings.isEmpty {
+                    ComparisonWarningsView(warnings: comparison.warnings)
+                }
                 Picker("Results view", selection: $selectedView) {
                     ForEach(ComparisonResultsSection.allCases) { section in
                         Label(section.rawValue, systemImage: section.systemImage)
@@ -34,16 +37,31 @@ struct ComparisonResultsView: View {
                 switch selectedView {
                 case .changes:
                     ChartSummary(summary: comparison.summary)
-                    HStack {
-                        TextField("Search paths", text: $viewModel.searchText)
-                            .textFieldStyle(.roundedBorder)
-                            .frame(maxWidth: 300)
-                        Picker("Filter", selection: $viewModel.filter) {
-                            ForEach(ChangeFilter.allCases) { Text($0.rawValue).tag($0) }
+                    ViewThatFits(in: .horizontal) {
+                        HStack {
+                            TextField("Search paths", text: $viewModel.searchText)
+                                .textFieldStyle(.roundedBorder)
+                                .frame(maxWidth: 300)
+                            Picker("Filter", selection: $viewModel.filter) {
+                                ForEach(ChangeFilter.allCases) { Text($0.rawValue).tag($0) }
+                            }
+                            .frame(width: 140)
+                            Spacer(minLength: 12)
+                            Text("\(viewModel.filteredChanges.count) shown")
+                                .foregroundStyle(.secondary)
                         }
-                        .frame(width: 140)
-                        Spacer()
-                        Text("\(viewModel.filteredChanges.count) shown").foregroundStyle(.secondary)
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                TextField("Search paths", text: $viewModel.searchText)
+                                    .textFieldStyle(.roundedBorder)
+                                Picker("Filter", selection: $viewModel.filter) {
+                                    ForEach(ChangeFilter.allCases) { Text($0.rawValue).tag($0) }
+                                }
+                                .frame(minWidth: 120)
+                            }
+                            Text("\(viewModel.filteredChanges.count) shown")
+                                .foregroundStyle(.secondary)
+                        }
                     }
                     ResultsTable(viewModel: viewModel)
                 case .folderImpact:
@@ -73,6 +91,29 @@ struct ComparisonResultsView: View {
     }
 }
 
+private struct ComparisonWarningsView: View {
+    let warnings: [String]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label("Comparison may be incomplete", systemImage: "exclamationmark.triangle.fill")
+                .font(.headline)
+                .foregroundStyle(.orange)
+
+            ForEach(Array(warnings.enumerated()), id: \.offset) { _, warning in
+                Text(warning)
+                    .font(.callout)
+                    .textSelection(.enabled)
+            }
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Comparison warning")
+    }
+}
+
 private enum ComparisonResultsSection: String, CaseIterable, Identifiable {
     case changes = "All changes"
     case folderImpact = "Folder impact"
@@ -96,7 +137,7 @@ struct SummaryHeader: View {
             SummaryCard(title: "Removed", value: "\(summary.removedCount)", detail: ByteCountFormatter.string(fromByteCount: Int64(summary.logicalBytesRemoved), countStyle: .file), color: .red, icon: "minus")
             SummaryCard(title: "Modified", value: "\(summary.modifiedCount)", detail: ByteCountFormatter.string(fromByteCount: Int64(summary.logicalBytesModified), countStyle: .file), color: .orange, icon: "pencil")
             SummaryCard(title: "Folders", value: "\(summary.folderChangeCount)", detail: "Contents changed", color: .purple, icon: "folder")
-            SummaryCard(title: "Scan duration", value: summary.duration.formatted(.number.precision(.fractionLength(1))) + "s", detail: "Logical bytes", color: .blue, icon: "timer")
+            SummaryCard(title: "Scan duration", value: summary.duration.formatted(.number.precision(.fractionLength(1))) + "s", detail: "Elapsed time", color: .blue, icon: "timer")
         }
     }
 }
@@ -161,8 +202,18 @@ private struct ChartSummary: View {
                     .foregroundStyle(by: .value("Change", entry.0))
             }
             .frame(height: 120)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Logical byte changes")
+            .accessibilityValue(accessibilitySummary)
         }
         .padding(.vertical, 4)
+    }
+
+    private var accessibilitySummary: String {
+        data.map { label, bytes in
+            "\(label): \(ByteCountFormatter.string(fromByteCount: Int64(bytes), countStyle: .file))"
+        }
+        .joined(separator: ", ")
     }
 }
 

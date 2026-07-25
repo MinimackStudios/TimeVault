@@ -2,6 +2,121 @@ import XCTest
 @testable import TimeVault
 
 final class SystemStatusServiceTests: XCTestCase {
+    func testTimeMachineEvidenceRecognizesAPFSMarkers() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("TimeVaultValidation-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        try Data().write(to: directory.appendingPathComponent(".com.apple.timemachine.donotpresent"))
+
+        let evidence = TimeMachineSnapshotDiscovery.timeMachineEvidence(
+            at: directory,
+            volumeName: "Archive"
+        )
+
+        XCTAssertEqual(evidence, "Found the APFS Time Machine marker on Archive.")
+    }
+
+    func testVolumeValidationRejectsFoldersInsideAVolume() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("TimeVaultValidation-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let validation = TimeMachineSnapshotDiscovery().validate(volume: directory)
+
+        XCTAssertFalse(validation.isCandidate)
+        XCTAssertFalse(validation.requiresSnapshotVerification)
+    }
+
+    func testEmptySuccessfulDiscoveryReportsLoadedZero() async {
+        let result = await SystemStatusService(
+            commandRunner: StubCommandRunner(result: .success(""))
+        ).discoverLocalSnapshots()
+
+        XCTAssertEqual(result.status, .loaded(0))
+        XCTAssertTrue(result.snapshots.isEmpty)
+    }
+
+    func testSuccessfulDiscoveryReportsSnapshotCount() async {
+        let output = """
+        com.apple.TimeMachine.2026-07-23-143015.local
+        com.apple.TimeMachine.2026-07-23-175646.local
+        """
+        let result = await SystemStatusService(
+            commandRunner: StubCommandRunner(result: .success(output))
+        ).discoverLocalSnapshots()
+
+        XCTAssertEqual(result.status, .loaded(2))
+        XCTAssertEqual(result.snapshots.count, 2)
+    }
+
+    func testFailedDiscoveryReportsFailureInsteadOfZero() async {
+        let result = await SystemStatusService(
+            commandRunner: StubCommandRunner(result: .failure(.commandFailed))
+        ).discoverLocalSnapshots()
+
+        XCTAssertEqual(result.status, .failed)
+        XCTAssertNil(result.status.count)
+        XCTAssertTrue(result.snapshots.isEmpty)
+    }
+
+    func testDashboardPreservesFailedDiscoveryStatus() async {
+        let dashboard = await SystemStatusService(
+            commandRunner: StubCommandRunner(result: .failure(.commandFailed))
+        ).loadDashboard()
+
+        XCTAssertEqual(dashboard.overview.localSnapshotStatus, .failed)
+        XCTAssertNil(dashboard.overview.localSnapshotStatus.count)
+        XCTAssertTrue(dashboard.localSnapshots.isEmpty)
+    }
+
+    func testCommandRunnerDrainsLargeStandardOutput() async throws {
+        let output = try await SystemCommandRunner().run(
+            "/bin/sh",
+            arguments: ["-c", "head -c 200000 /dev/zero | tr '\\0' x"]
+        )
+
+        XCTAssertEqual(output.count, 200_000)
+    }
+
+    func testCommandRunnerDrainsLargeStandardError() async throws {
+        let output = try await SystemCommandRunner().run(
+            "/bin/sh",
+            arguments: ["-c", "head -c 200000 /dev/zero | tr '\\0' e >&2; printf done"]
+        )
+
+        XCTAssertEqual(output, "done")
+    }
+
+    func testCommandRunnerTerminatesProcessWhenCancelled() async throws {
+        let task = Task {
+            try await SystemCommandRunner().run("/bin/sleep", arguments: ["10"])
+        }
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        task.cancel()
+
+        do {
+            _ = try await task.value
+            XCTFail("Expected cancellation")
+        } catch is CancellationError {
+            // Expected.
+        }
+    }
+
+    func testCommandRunnerReportsStandardErrorOnFailure() async throws {
+        do {
+            _ = try await SystemCommandRunner().run(
+                "/bin/sh",
+                arguments: ["-c", "printf 'tmutil failed' >&2; exit 7"]
+            )
+            XCTFail("Expected command failure")
+        } catch let error as AppError {
+            XCTAssertTrue(error.errorDescription?.contains("tmutil failed") == true)
+        }
+    }
+
     func testParsesTimeMachineLocalSnapshotDate() {
         let date = SystemStatusService.snapshotDate(in: "com.apple.TimeMachine.2026-07-23-143015.local")
 
@@ -43,4 +158,16 @@ final class SystemStatusServiceTests: XCTestCase {
         )
     }
 
+}
+
+private enum StubCommandError: Error, Sendable {
+    case commandFailed
+}
+
+private struct StubCommandRunner: SystemCommandRunning {
+    let result: Result<String, StubCommandError>
+
+    func run(_ executablePath: String, arguments: [String]) async throws -> String {
+        try result.get()
+    }
 }

@@ -1,15 +1,22 @@
 import Foundation
 
 protocol FileSystem: Sendable {
-    func scan(root: URL, progress: @escaping @Sendable (Int) -> Void) throws -> [FileMetadata]
+    func scan(root: URL, progress: @escaping @Sendable (Int) -> Void) throws -> FileScanResult
+}
+
+struct FileScanResult: Sendable {
+    let records: [FileMetadata]
+    let warnings: [String]
 }
 
 struct LocalFileSystem: FileSystem {
-    func scan(root: URL, progress: @escaping @Sendable (Int) -> Void) throws -> [FileMetadata] {
+    func scan(root: URL, progress: @escaping @Sendable (Int) -> Void) throws -> FileScanResult {
         let fileManager = FileManager.default
         guard fileManager.isReadableFile(atPath: root.path) else {
             throw AppError.permissionDenied(root)
         }
+
+        let diagnostics = ScanDiagnostics(root: root)
 
         let keys: [URLResourceKey] = [
             .isDirectoryKey, .isSymbolicLinkKey, .fileSizeKey, .contentModificationDateKey,
@@ -19,7 +26,10 @@ struct LocalFileSystem: FileSystem {
             at: root,
             includingPropertiesForKeys: keys,
             options: [],
-            errorHandler: { _, _ in true }
+            errorHandler: { url, error in
+                diagnostics.record(url: url, error: error)
+                return true
+            }
         ) else {
             throw AppError.snapshotUnavailable(root)
         }
@@ -63,11 +73,11 @@ struct LocalFileSystem: FileSystem {
                 count += 1
                 if count % 256 == 0 { progress(count) }
             } catch {
-                continue
+                diagnostics.record(url: url, error: error)
             }
         }
         progress(count)
-        return records
+        return FileScanResult(records: records, warnings: diagnostics.warnings)
     }
 
     private func normalizedRelativePath(url: URL, root: URL) -> String {
@@ -81,5 +91,47 @@ struct LocalFileSystem: FileSystem {
         if let number = value as? NSNumber { return number.uint64Value }
         if let string = value as? String { return UInt64(string) }
         return nil
+    }
+}
+
+private final class ScanDiagnostics {
+    private static let sampleLimit = 5
+
+    private let root: URL
+    private var skippedItemCount = 0
+    private var samples: [String] = []
+
+    init(root: URL) {
+        self.root = root
+    }
+
+    func record(url: URL, error: Error) {
+        skippedItemCount += 1
+        guard samples.count < Self.sampleLimit else { return }
+
+        let relativePath = relativePath(for: url)
+        samples.append("\(relativePath): \(error.localizedDescription)")
+    }
+
+    var warnings: [String] {
+        guard skippedItemCount > 0 else { return [] }
+
+        let itemDescription = skippedItemCount == 1 ? "1 item" : "\(skippedItemCount) items"
+        var warning = "The scan skipped \(itemDescription). Comparison results may be incomplete."
+        if !samples.isEmpty {
+            warning += " Examples: " + samples.joined(separator: "; ")
+        }
+        if skippedItemCount > samples.count {
+            warning += "; plus \(skippedItemCount - samples.count) more."
+        }
+        return [warning]
+    }
+
+    private func relativePath(for url: URL) -> String {
+        let rootPath = root.standardizedFileURL.path.hasSuffix("/") ? root.standardizedFileURL.path : root.standardizedFileURL.path + "/"
+        let path = url.standardizedFileURL.path
+        guard path.hasPrefix(rootPath) else { return url.lastPathComponent }
+        let relativePath = PathNormalizer.normalize(String(path.dropFirst(rootPath.count)))
+        return relativePath.isEmpty ? url.lastPathComponent : relativePath
     }
 }

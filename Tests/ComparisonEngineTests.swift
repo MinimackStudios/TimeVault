@@ -23,6 +23,7 @@ final class ComparisonEngineTests: XCTestCase {
         XCTAssertEqual(comparison.changes.first(where: { $0.relativePath == "removed.txt" })?.kind, .removed)
         XCTAssertEqual(comparison.changes.first(where: { $0.relativePath == "changed.txt" })?.kind, .modified)
         XCTAssertEqual(comparison.changes.first(where: { $0.relativePath == "permissions.txt" })?.kind, .metadataChanged)
+        XCTAssertEqual(comparison.summary.modifiedCount, 2)
         XCTAssertEqual(comparison.summary.logicalBytesAdded, 7)
         XCTAssertEqual(comparison.summary.logicalBytesRemoved, 4)
         XCTAssertEqual(comparison.summary.logicalBytesModified, 5)
@@ -47,7 +48,9 @@ final class ComparisonEngineTests: XCTestCase {
         defer { try? FileManager.default.removeItem(at: root) }
         try Data("target".utf8).write(to: root.appendingPathComponent("target.txt"))
         try FileManager.default.createSymbolicLink(atPath: root.appendingPathComponent("link.txt").path, withDestinationPath: "target.txt")
-        let records = try LocalFileSystem().scan(root: root, progress: { _ in })
+        let scanResult = try LocalFileSystem().scan(root: root, progress: { _ in })
+        let records = scanResult.records
+        XCTAssertTrue(scanResult.warnings.isEmpty)
         XCTAssertEqual(records.first(where: { $0.relativePath == "link.txt" })?.itemType, .symbolicLink)
         XCTAssertNil(records.first(where: { $0.relativePath == "link.txt/target.txt" }))
     }
@@ -118,6 +121,20 @@ final class ComparisonEngineTests: XCTestCase {
         guard case .inaccessible = state else {
             return XCTFail("Expected inaccessible permission state")
         }
+    }
+
+    func testPermissionFailureProvidesRecoveryGuidance() {
+        let state = PermissionService().verifyReadAccess(to: URL(fileURLWithPath: "/definitely/not/a/real/backup"))
+        guard case .inaccessible(let detail) = state else {
+            return XCTFail("Expected inaccessible permission state")
+        }
+
+        XCTAssertTrue(detail.contains("Choose Volume"))
+        XCTAssertTrue(detail.contains("Full Disk Access"))
+        XCTAssertEqual(
+            PermissionService.fullDiskAccessSettingsURL?.absoluteString,
+            "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles"
+        )
     }
 
     func testAPFSTimeMachinePathUsesBackupSuffixTimestamp() throws {

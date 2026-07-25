@@ -34,8 +34,8 @@ struct DashboardView: View {
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 230), spacing: 14)], spacing: 14) {
                         DashboardMetricCard(
                             title: "Local snapshots",
-                            value: "\(overview.localSnapshotCount)",
-                            detail: "On \(overview.startupVolumeName)",
+                            value: overview.localSnapshotStatus.displayValue,
+                            detail: overview.localSnapshotStatus.count == nil ? overview.localSnapshotStatus.detail : "On \(overview.startupVolumeName)",
                             image: "clock.arrow.circlepath",
                             tint: .blue
                         )
@@ -58,7 +58,7 @@ struct DashboardView: View {
                     LazyVGrid(columns: [GridItem(.flexible(), spacing: 14), GridItem(.flexible())], spacing: 14) {
                         DashboardStorageCard(overview: overview)
                         DashboardSnapshotCard(
-                            count: overview.localSnapshotCount,
+                            status: overview.localSnapshotStatus,
                             volumeName: overview.startupVolumeName,
                             browseSnapshots: { viewModel.showSnapshotBrowser() }
                         )
@@ -221,6 +221,8 @@ private struct DashboardStorageCard: View {
             if let usedCapacity = overview.usedCapacity, let totalCapacity = overview.totalCapacity, totalCapacity > 0 {
                 ProgressView(value: Double(usedCapacity), total: Double(totalCapacity))
                     .tint(.purple)
+                    .accessibilityLabel("Startup disk storage used")
+                    .accessibilityValue(storageAccessibilityValue(used: usedCapacity, total: totalCapacity, available: overview.availableCapacity))
                 HStack {
                     Text("\(ByteCountFormatter.string(fromByteCount: usedCapacity, countStyle: .file)) used")
                     Spacer()
@@ -242,10 +244,18 @@ private struct DashboardStorageCard: View {
                 .stroke(.quaternary, lineWidth: 1)
         }
     }
+
+    private func storageAccessibilityValue(used: Int64, total: Int64, available: Int64?) -> String {
+        let usedText = ByteCountFormatter.string(fromByteCount: used, countStyle: .file)
+        let totalText = ByteCountFormatter.string(fromByteCount: total, countStyle: .file)
+        guard let available else { return "\(usedText) of \(totalText) used" }
+        let availableText = ByteCountFormatter.string(fromByteCount: available, countStyle: .file)
+        return "\(usedText) of \(totalText) used, \(availableText) available"
+    }
 }
 
 private struct DashboardSnapshotCard: View {
-    let count: Int
+    let status: LocalSnapshotDiscoveryStatus
     let volumeName: String
     let browseSnapshots: () -> Void
 
@@ -253,9 +263,15 @@ private struct DashboardSnapshotCard: View {
         VStack(alignment: .leading, spacing: 12) {
             Label("Snapshot storage", systemImage: "clock.arrow.circlepath")
                 .font(.headline)
-            Text("\(count) local snapshots")
+            Group {
+                if let count = status.count {
+                    Text("\(count.formatted()) local snapshots")
+                } else {
+                    Text("Local snapshots unavailable")
+                }
+            }
                 .font(.title3.weight(.semibold))
-            Text("Local Time Machine history stored on \(volumeName), available even when your backup drive is disconnected.")
+            Text(status.count == nil ? status.detail : "Local Time Machine history stored on \(volumeName), available even when your backup drive is disconnected.")
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)

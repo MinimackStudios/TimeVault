@@ -34,7 +34,16 @@ struct SnapshotSelectionView: View {
                 }
 
                 if case .inaccessible(let detail) = viewModel.permissionState {
-                    Label(detail, systemImage: "lock.fill").foregroundStyle(.orange).padding(.vertical, 4)
+                    VStack(alignment: .leading, spacing: 8) {
+                        Label(detail, systemImage: "lock.fill")
+                            .foregroundStyle(.orange)
+                        HStack(spacing: 12) {
+                            Button("Open Full Disk Access", action: viewModel.openFullDiskAccessSettings)
+                            Button("Choose Volume Again", action: viewModel.chooseBackupVolume)
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                    .padding(.vertical, 4)
                 }
 
                 VStack(alignment: .leading, spacing: 0) {
@@ -51,7 +60,7 @@ struct SnapshotSelectionView: View {
                                 .foregroundStyle(.tint)
                             Text("Local snapshots")
                                 .font(.headline)
-                            Text(viewModel.localSnapshots.count.formatted())
+                            Text(viewModel.localSnapshotStatus.displayValue)
                                 .font(.caption.weight(.semibold))
                                 .foregroundStyle(.secondary)
                                 .padding(.horizontal, 7)
@@ -69,7 +78,11 @@ struct SnapshotSelectionView: View {
 
                     if localSnapshotsExpanded {
                         Group {
-                            if viewModel.localSnapshots.isEmpty {
+                            if viewModel.localSnapshotStatus.count == nil {
+                                Text(viewModel.localSnapshotStatus.detail)
+                                    .foregroundStyle(.secondary)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            } else if viewModel.localSnapshots.isEmpty {
                                 Text("No local Time Machine snapshots are currently available on this Mac.")
                                     .foregroundStyle(.secondary)
                                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -80,10 +93,6 @@ struct SnapshotSelectionView: View {
                                             .font(.callout)
                                             .foregroundStyle(.secondary)
                                         Spacer()
-                                        Button("Browse in Time Machine", systemImage: "clock.arrow.circlepath") {
-                                            viewModel.browseLocalSnapshots()
-                                        }
-                                        .buttonStyle(.bordered)
                                     }
                                     ForEach(displayedLocalSnapshots) { snapshot in
                                         HStack {
@@ -315,12 +324,29 @@ private struct ScanProgressPanel: View {
             .background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 10))
             .accessibilityElement(children: .contain)
             .accessibilityLabel("Snapshot comparison progress")
+            .accessibilityValue(accessibilitySummary(at: context.date))
         }
     }
 
     private func elapsedTime(for progress: ScanProgress, at date: Date) -> TimeInterval {
         guard let startedAt = progress.startedAt else { return progress.elapsedTime }
         return max(progress.elapsedTime, date.timeIntervalSince(startedAt))
+    }
+
+    private func accessibilitySummary(at date: Date) -> String {
+        guard let progress else { return "Preparing comparison" }
+
+        let itemLabel = progress.phase == "Comparing changes" ? "paths compared" : "items scanned"
+        let elapsed = elapsedTime(for: progress, at: date)
+            .formatted(.number.precision(.fractionLength(1)))
+        let rate = progress.itemsPerSecond
+            .formatted(.number.precision(.fractionLength(0)))
+        var summary = "\(progress.phase), \(progress.rootName). \(progress.itemsScanned.formatted()) \(itemLabel). Rate \(rate) per second. Elapsed \(elapsed) seconds."
+        if let estimatedItemCount = progress.estimatedItemCount, estimatedItemCount > 0 {
+            let completed = min(progress.itemsScanned, estimatedItemCount)
+            summary += " \(completed.formatted()) of \(estimatedItemCount.formatted()) estimated items."
+        }
+        return summary
     }
 
     @ViewBuilder
@@ -392,7 +418,7 @@ struct SnapshotPicker: View {
                     .font(.caption2)
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
-                    .frame(height: 12, alignment: .topLeading)
+                    .frame(minHeight: 28, alignment: .topLeading)
                     .frame(maxWidth: .infinity, alignment: .topLeading)
                     .opacity(snapshot == nil ? 0 : 1)
                     .accessibilityHidden(snapshot == nil)

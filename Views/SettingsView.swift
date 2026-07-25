@@ -1,4 +1,3 @@
-import AppKit
 import SwiftUI
 
 struct SettingsView: View {
@@ -13,18 +12,6 @@ struct SettingsView: View {
                 }
                 .tag(SettingsPane.general)
 
-            ComparisonSettingsPane()
-                .tabItem {
-                    Label("Comparison", systemImage: "arrow.left.and.right")
-                }
-                .tag(SettingsPane.comparison)
-
-            StorageSettingsPane()
-                .tabItem {
-                    Label("Storage", systemImage: "externaldrive")
-                }
-                .tag(SettingsPane.storage)
-
             AccessSettingsPane(viewModel: viewModel)
                 .tabItem {
                     Label("Access", systemImage: "lock.shield")
@@ -32,14 +19,12 @@ struct SettingsView: View {
                 .tag(SettingsPane.access)
         }
         .tabViewStyle(.automatic)
-        .frame(width: 720, height: 500)
+        .frame(minWidth: 720, idealWidth: 720, minHeight: 500, idealHeight: 500)
     }
 }
 
 private enum SettingsPane: Hashable {
     case general
-    case comparison
-    case storage
     case access
 }
 
@@ -70,46 +55,6 @@ private struct GeneralSettingsPane: View {
     }
 }
 
-private struct ComparisonSettingsPane: View {
-    @AppStorage("deepComparisonEnabled") private var deepComparisonEnabled = false
-
-    var body: some View {
-        SettingsPaneContent(
-            title: "Comparison",
-            subtitle: "Choose how deeply the app should inspect differences between two snapshots.")
-        {
-            Toggle(isOn: $deepComparisonEnabled) {
-                SettingsToggleLabel(
-                    title: "Deeper comparison",
-                    detail: "Use checksums when file metadata cannot clearly determine a change.",
-                    systemImage: "magnifyingglass"
-                )
-            }
-            SettingsFootnote("Checksums are off by default because a backup can contain millions of files. This preference is reserved for a future opt-in scan mode.")
-        }
-    }
-}
-
-private struct StorageSettingsPane: View {
-    @AppStorage("cacheMetadataEnabled") private var cacheMetadataEnabled = true
-
-    var body: some View {
-        SettingsPaneContent(
-            title: "Storage",
-            subtitle: "Control whether local metadata is retained to speed up repeat comparisons.")
-        {
-            Toggle(isOn: $cacheMetadataEnabled) {
-                SettingsToggleLabel(
-                    title: "Cache file metadata",
-                    detail: "Keep a local index to make repeat comparisons faster.",
-                    systemImage: "externaldrive"
-                )
-            }
-            SettingsFootnote("The cache contains metadata only. Time Machine file contents are never copied into it.")
-        }
-    }
-}
-
 private struct AccessSettingsPane: View {
     @ObservedObject var viewModel: AppViewModel
 
@@ -130,7 +75,7 @@ private struct AccessSettingsPane: View {
                 detail: "Open macOS Privacy & Security settings if protected backup folders cannot be read.",
                 systemImage: "checkmark.shield",
                 actionTitle: "Open Settings…",
-                action: openFullDiskAccessSettings
+                action: viewModel.openFullDiskAccessSettings
             )
             SettingsActionRow(
                 title: "Detected drives",
@@ -164,10 +109,6 @@ private struct AccessSettingsPane: View {
         return "No backup volume is currently selected."
     }
 
-    private func openFullDiskAccessSettings() {
-        guard let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles") else { return }
-        NSWorkspace.shared.open(url)
-    }
 }
 
 private struct SettingsPaneContent<Content: View>: View {
@@ -271,20 +212,5 @@ private struct SettingsActionRow: View {
             Button(actionTitle, action: action)
                 .buttonStyle(.bordered)
         }
-    }
-}
-
-private struct SettingsFootnote: View {
-    let text: String
-
-    init(_ text: String) {
-        self.text = text
-    }
-
-    var body: some View {
-        Text(text)
-            .font(.caption)
-            .foregroundStyle(.secondary)
-            .fixedSize(horizontal: false, vertical: true)
     }
 }

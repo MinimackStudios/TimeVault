@@ -11,6 +11,12 @@ enum AppSection: Hashable {
 
 @MainActor
 final class AppViewModel: ObservableObject {
+    typealias ComparisonOperation = @Sendable (
+        BackupSnapshot,
+        BackupSnapshot,
+        @escaping @Sendable (ScanProgress) async -> Void
+    ) async throws -> SnapshotComparison
+
     @Published var section: AppSection = .dashboard
     @Published var mountedVolumes: [URL] = []
     @Published var selectedVolume: URL?
@@ -30,6 +36,7 @@ final class AppViewModel: ObservableObject {
     @Published var diagnostics: String?
     @Published var systemOverview: SystemOverview?
     @Published var localSnapshots: [LocalSnapshot] = []
+    @Published var localSnapshotStatus: LocalSnapshotDiscoveryStatus = .unavailable
     @Published var isRefreshingSystemOverview = false
 
     private let discovery = TimeMachineSnapshotDiscovery()
@@ -37,16 +44,30 @@ final class AppViewModel: ObservableObject {
     private let bookmarks = SecurityScopedBookmarkStore()
     private let exportService = ExportService()
     private let systemStatus = SystemStatusService()
+    private let comparisonOperation: ComparisonOperation
     private let logger = Logger(subsystem: "com.minimackstudios.TimeVault", category: "workflow")
     private var comparisonTask: Task<Void, Never>?
+    private var activeComparisonID: UUID?
     private var activeSecurityScopedURL: URL?
     private var filteredChangesCache: [FileChange] = []
     private var filteredChangesCacheIsValid = false
 
-    init() {
-        mountedVolumes = bookmarks.restore()
-        refreshMountedVolumes()
-        refreshSystemOverview()
+    init(
+        comparisonOperation: @escaping ComparisonOperation = { olderSnapshot, newerSnapshot, progress in
+            try await AppViewModel.performComparison(
+                olderSnapshot: olderSnapshot,
+                newerSnapshot: newerSnapshot,
+                progress: progress
+            )
+        },
+        performInitialRefresh: Bool = true
+    ) {
+        self.comparisonOperation = comparisonOperation
+        if performInitialRefresh {
+            mountedVolumes = bookmarks.restore()
+            refreshMountedVolumes()
+            refreshSystemOverview()
+        }
     }
 
     deinit {
@@ -81,6 +102,11 @@ final class AppViewModel: ObservableObject {
         return filteredChangesCache
     }
 
+    var shouldShowPermissionRecovery: Bool {
+        if case .inaccessible = permissionState { return true }
+        return false
+    }
+
     private func invalidateFilteredChangesCache() {
         filteredChangesCacheIsValid = false
     }
@@ -88,7 +114,7 @@ final class AppViewModel: ObservableObject {
     func refreshMountedVolumes() {
         let urls = FileManager.default.mountedVolumeURLs(includingResourceValuesForKeys: [.volumeNameKey, .volumeIsRemovableKey], options: [.skipHiddenVolumes]) ?? []
         let candidates = Array(Set(mountedVolumes + urls)).filter { volume in
-            discovery.validate(volume: volume).isCandidate
+            discovery.isSidebarCandidate(volume: volume)
         }
         mountedVolumes = candidates.sorted { $0.path < $1.path }
     }
@@ -101,18 +127,8 @@ final class AppViewModel: ObservableObject {
             let dashboard = await self.systemStatus.loadDashboard()
             self.systemOverview = dashboard.overview
             self.localSnapshots = dashboard.localSnapshots
+            self.localSnapshotStatus = dashboard.overview.localSnapshotStatus
             self.isRefreshingSystemOverview = false
-        }
-    }
-
-    func browseLocalSnapshots() {
-        Task { [weak self] in
-            guard let self else { return }
-            do {
-                try await self.systemStatus.browseLocalSnapshots()
-            } catch {
-                self.present(error)
-            }
         }
     }
 
@@ -149,6 +165,11 @@ final class AppViewModel: ObservableObject {
         try? bookmarks.save(url: url)
         section = .snapshots(url)
         discoverSnapshots()
+    }
+
+    func openFullDiskAccessSettings() {
+        guard let url = PermissionService.fullDiskAccessSettingsURL else { return }
+        NSWorkspace.shared.open(url)
     }
 
     func chooseFolderSnapshot(isOlder: Bool) {
@@ -215,25 +236,35 @@ final class AppViewModel: ObservableObject {
             return
         }
         comparisonTask?.cancel()
+        let comparisonID = UUID()
+        activeComparisonID = comparisonID
         isComparing = true
         comparison = nil
         errorMessage = nil
         progress = ScanProgress(phase: "Preparing", rootName: "Snapshots", itemsScanned: 0, estimatedItemCount: nil, elapsedTime: 0, itemsPerSecond: 0, startedAt: Date())
-        let service = ComparisonService(scanner: FileScanner(fileSystem: LocalFileSystem()), engine: ComparisonEngine())
+        let operation = comparisonOperation
         comparisonTask = Task.detached(priority: .userInitiated) { [weak self] in
             guard let self else { return }
             do {
-                let result = try await service.compare(olderSnapshot: olderSnapshot, newerSnapshot: newerSnapshot) { progress in
-                    await MainActor.run { self.progress = progress }
+                let result = try await operation(olderSnapshot, newerSnapshot) { progress in
+                    await MainActor.run {
+                        guard self.activeComparisonID == comparisonID else { return }
+                        self.progress = progress
+                    }
                 }
                 await MainActor.run {
+                    guard self.activeComparisonID == comparisonID else { return }
                     self.comparison = result
                     self.section = .comparison
                     self.logger.info("Comparison completed with \(result.changes.count) changed paths")
                     self.isComparing = false
+                    self.progress = nil
+                    self.comparisonTask = nil
+                    self.activeComparisonID = nil
                 }
             } catch {
                 await MainActor.run {
+                    guard self.activeComparisonID == comparisonID else { return }
                     if case AppError.comparisonCancelled = error {
                         self.errorMessage = nil
                         self.diagnostics = nil
@@ -241,17 +272,38 @@ final class AppViewModel: ObservableObject {
                         self.present(error)
                     }
                     self.isComparing = false
+                    self.progress = nil
+                    self.comparisonTask = nil
+                    self.activeComparisonID = nil
                 }
             }
         }
     }
 
     func cancelComparison() {
+        activeComparisonID = nil
         comparisonTask?.cancel()
+        comparisonTask = nil
         isComparing = false
         progress = nil
         errorMessage = nil
         diagnostics = nil
+    }
+
+    nonisolated private static func performComparison(
+        olderSnapshot: BackupSnapshot,
+        newerSnapshot: BackupSnapshot,
+        progress: @escaping @Sendable (ScanProgress) async -> Void
+    ) async throws -> SnapshotComparison {
+        let service = ComparisonService(
+            scanner: FileScanner(fileSystem: LocalFileSystem()),
+            engine: ComparisonEngine()
+        )
+        return try await service.compare(
+            olderSnapshot: olderSnapshot,
+            newerSnapshot: newerSnapshot,
+            progress: progress
+        )
     }
 
     func exportJSON() { export(extension: "json") { try exportService.writeJSON($0, to: $1) } }
@@ -291,7 +343,10 @@ final class AppViewModel: ObservableObject {
     private func present(_ error: Error) {
         errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         diagnostics = String(describing: error)
-        logger.error("Workflow error: \(String(describing: error), privacy: .public)")
+        if case AppError.permissionDenied(let url) = error {
+            permissionState = permissions.verifyReadAccess(to: url)
+        }
+        logger.error("Workflow error: \(String(describing: error), privacy: .private)")
     }
 }
 

@@ -17,7 +17,13 @@ struct ContentView: View {
             }
             .overlay(alignment: .bottom) {
                 if let message = viewModel.errorMessage {
-                    ErrorBanner(message: message, diagnostics: viewModel.diagnostics) { viewModel.errorMessage = nil }
+                    ErrorBanner(
+                        message: message,
+                        diagnostics: viewModel.diagnostics,
+                        showsPermissionRecovery: viewModel.shouldShowPermissionRecovery,
+                        openFullDiskAccessSettings: viewModel.openFullDiskAccessSettings,
+                        chooseBackupVolume: viewModel.chooseBackupVolume
+                    ) { viewModel.errorMessage = nil }
                         .padding()
                 }
             }
@@ -95,6 +101,9 @@ struct SidebarView: View {
 struct ErrorBanner: View {
     let message: String
     let diagnostics: String?
+    let showsPermissionRecovery: Bool
+    let openFullDiskAccessSettings: () -> Void
+    let chooseBackupVolume: () -> Void
     let dismiss: () -> Void
     @State private var showDiagnostics = false
 
@@ -105,6 +114,13 @@ struct ErrorBanner: View {
                 Text(message).font(.callout)
                 Spacer()
                 Button("Dismiss", action: dismiss).buttonStyle(.borderless)
+            }
+            if showsPermissionRecovery {
+                HStack(spacing: 12) {
+                    Button("Open Full Disk Access", action: openFullDiskAccessSettings)
+                    Button("Choose Volume Again", action: chooseBackupVolume)
+                }
+                .buttonStyle(.bordered)
             }
             if let diagnostics {
                 DisclosureGroup("Technical details", isExpanded: $showDiagnostics) { Text(diagnostics).font(.caption.monospaced()).textSelection(.enabled) }

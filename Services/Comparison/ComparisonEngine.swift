@@ -99,6 +99,7 @@ struct ComparisonEngine: Sendable {
         let added = changes.filter { $0.kind == .added && !$0.isFolder }
         let removed = changes.filter { $0.kind == .removed && !$0.isFolder }
         let changed = changes.filter { [.modified, .typeChanged, .metadataChanged].contains($0.kind) && !$0.isFolder }
+        let contentChanged = changed.filter { [.modified, .typeChanged].contains($0.kind) }
         let summary = ComparisonSummary(
             addedCount: added.count,
             removedCount: removed.count,
@@ -106,7 +107,7 @@ struct ComparisonEngine: Sendable {
             folderChangeCount: changes.filter { $0.isFolder }.count,
             logicalBytesAdded: uniqueByteTotal(added, metadata: { $0.newMetadata }),
             logicalBytesRemoved: uniqueByteTotal(removed, metadata: { $0.oldMetadata }),
-            logicalBytesModified: uniqueByteTotal(changed, metadata: { $0.newMetadata ?? $0.oldMetadata }),
+            logicalBytesModified: uniqueByteTotal(contentChanged, metadata: { $0.newMetadata ?? $0.oldMetadata }),
             duration: duration
         )
         let folderImpacts = Set(oldFolderSizes.keys)

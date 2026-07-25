@@ -1,8 +1,11 @@
 import Foundation
-import AppKit
 
 struct SystemStatusService: Sendable {
-    private let commandRunner = SystemCommandRunner()
+    private let commandRunner: any SystemCommandRunning
+
+    init(commandRunner: any SystemCommandRunning = SystemCommandRunner()) {
+        self.commandRunner = commandRunner
+    }
 
     func loadDashboard() async -> (overview: SystemOverview, localSnapshots: [LocalSnapshot]) {
         async let activity = backupActivity()
@@ -16,44 +19,33 @@ struct SystemStatusService: Sendable {
             .volumeAvailableCapacityKey
         ])
 
-        let (resolvedActivity, resolvedLastBackupPath, snapshots) = await (activity, lastBackupPath, localSnapshots)
+        let (resolvedActivity, resolvedLastBackupPath, snapshotResult) = await (activity, lastBackupPath, localSnapshots)
         let overview = SystemOverview(
             backupActivity: resolvedActivity,
             lastBackupPath: resolvedLastBackupPath,
             startupVolumeName: values?.volumeName ?? "Startup disk",
             totalCapacity: values?.volumeTotalCapacity.map(Int64.init),
             availableCapacity: values?.volumeAvailableCapacity.map(Int64.init),
-            localSnapshotCount: snapshots.count,
+            localSnapshotStatus: snapshotResult.status,
             refreshedAt: Date()
         )
-        return (overview, snapshots)
+        return (overview, snapshotResult.snapshots)
     }
 
-    func discoverLocalSnapshots() async -> [LocalSnapshot] {
-        guard let output = try? await commandRunner.run("/usr/bin/tmutil", arguments: ["listlocalsnapshots", "/"]) else {
-            return []
+    func discoverLocalSnapshots() async -> LocalSnapshotDiscoveryResult {
+        let output: String
+        do {
+            output = try await commandRunner.run("/usr/bin/tmutil", arguments: ["listlocalsnapshots", "/"])
+        } catch is CancellationError {
+            return LocalSnapshotDiscoveryResult(status: .unavailable, snapshots: [])
+        } catch {
+            return LocalSnapshotDiscoveryResult(status: .failed, snapshots: [])
         }
         let volumeName = (try? URL(fileURLWithPath: "/").resourceValues(forKeys: [.volumeNameKey]).volumeName) ?? "Startup disk"
-        return Self.snapshotNames(in: output)
+        let snapshots = Self.snapshotNames(in: output)
             .map { LocalSnapshot(name: $0, date: Self.snapshotDate(in: $0), volumeName: volumeName) }
             .sorted { ($0.date ?? .distantPast) > ($1.date ?? .distantPast) }
-    }
-
-    @MainActor
-    func browseLocalSnapshots() async throws {
-        let workspace = NSWorkspace.shared
-        guard workspace.open(URL(fileURLWithPath: "/")) else {
-            throw LocalSnapshotBrowseError.finderUnavailable
-        }
-        try await Task.sleep(nanoseconds: 250_000_000)
-
-        let applicationURL = URL(fileURLWithPath: "/System/Applications/Time Machine.app")
-        guard FileManager.default.fileExists(atPath: applicationURL.path) else {
-            throw LocalSnapshotBrowseError.timeMachineUnavailable
-        }
-        let configuration = NSWorkspace.OpenConfiguration()
-        configuration.activates = true
-        _ = try await workspace.openApplication(at: applicationURL, configuration: configuration)
+        return LocalSnapshotDiscoveryResult(status: .loaded(snapshots.count), snapshots: snapshots)
     }
 
     private func backupActivity() async -> BackupActivity {
@@ -90,43 +82,88 @@ struct SystemStatusService: Sendable {
 
 }
 
-enum LocalSnapshotBrowseError: LocalizedError {
-    case finderUnavailable
-    case timeMachineUnavailable
+struct LocalSnapshotDiscoveryResult: Sendable {
+    let status: LocalSnapshotDiscoveryStatus
+    let snapshots: [LocalSnapshot]
+}
 
-    var errorDescription: String? {
-        switch self {
-        case .finderUnavailable:
-            "TimeVault could not open the startup disk in Finder."
-        case .timeMachineUnavailable:
-            "The Time Machine browser is unavailable on this Mac."
+protocol SystemCommandRunning: Sendable {
+    func run(_ executablePath: String, arguments: [String]) async throws -> String
+}
+
+struct SystemCommandRunner: SystemCommandRunning, Sendable {
+    func run(_ executablePath: String, arguments: [String]) async throws -> String {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: executablePath)
+        process.arguments = arguments
+        let output = Pipe()
+        let error = Pipe()
+        process.standardOutput = output
+        process.standardError = error
+        let controller = ProcessController(process: process)
+
+        return try await withTaskCancellationHandler {
+            do {
+                try controller.start()
+            } catch is CancellationError {
+                throw CancellationError()
+            } catch {
+                throw AppError.tmutilFailed(error.localizedDescription)
+            }
+
+            let stdoutTask = Task.detached(priority: .utility) {
+                output.fileHandleForReading.readDataToEndOfFile()
+            }
+            let stderrTask = Task.detached(priority: .utility) {
+                error.fileHandleForReading.readDataToEndOfFile()
+            }
+            let terminationTask = Task.detached(priority: .utility) {
+                process.waitUntilExit()
+                return process.terminationStatus
+            }
+
+            let status = await terminationTask.value
+            let stdoutData = await stdoutTask.value
+            let stderrData = await stderrTask.value
+            try Task.checkCancellation()
+
+            guard status == 0 else {
+                let message = String(data: stderrData, encoding: .utf8) ?? "Command failed."
+                throw AppError.tmutilFailed(message.trimmingCharacters(in: .whitespacesAndNewlines))
+            }
+            return String(data: stdoutData, encoding: .utf8) ?? ""
+        } onCancel: {
+            controller.cancel()
         }
     }
 }
 
-private struct SystemCommandRunner: Sendable {
-    func run(_ executablePath: String, arguments: [String]) async throws -> String {
-        try await withCheckedThrowingContinuation { continuation in
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: executablePath)
-            process.arguments = arguments
-            let output = Pipe()
-            let error = Pipe()
-            process.standardOutput = output
-            process.standardError = error
+private final class ProcessController: @unchecked Sendable {
+    private let process: Process
+    private let lock = NSLock()
+    private var isCancelled = false
+    private var hasStarted = false
 
-            do {
-                try process.run()
-                process.waitUntilExit()
-                guard process.terminationStatus == 0 else {
-                    let message = String(data: error.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? "Command failed."
-                    continuation.resume(throwing: AppError.tmutilFailed(message.trimmingCharacters(in: .whitespacesAndNewlines)))
-                    return
-                }
-                continuation.resume(returning: String(data: output.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? "")
-            } catch {
-                continuation.resume(throwing: error)
-            }
+    init(process: Process) {
+        self.process = process
+    }
+
+    func start() throws {
+        lock.lock()
+        defer { lock.unlock() }
+        guard !isCancelled else { throw CancellationError() }
+        try process.run()
+        hasStarted = true
+    }
+
+    func cancel() {
+        lock.lock()
+        isCancelled = true
+        let shouldTerminate = hasStarted && process.isRunning
+        lock.unlock()
+
+        if shouldTerminate {
+            process.terminate()
         }
     }
 }
