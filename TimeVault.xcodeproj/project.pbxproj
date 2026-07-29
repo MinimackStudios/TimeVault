@@ -38,6 +38,8 @@
 		A031 /* SystemStatusService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B028 /* SystemStatusService.swift */; };
 		A032 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B029 /* DashboardView.swift */; };
 		A033 /* SystemStatusServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B030 /* SystemStatusServiceTests.swift */; };
+		A034 /* UpdateController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B031 /* UpdateController.swift */; };
+		A035 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = L001 /* Sparkle */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -81,6 +83,8 @@
 		B028 /* SystemStatusService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemStatusService.swift; sourceTree = "<group>"; };
 		B029 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		B030 /* SystemStatusServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemStatusServiceTests.swift; sourceTree = "<group>"; };
+		B031 /* UpdateController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateController.swift; sourceTree = "<group>"; };
+		B032 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C001 /* TimeVault.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TimeVault.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C002 /* TimeVaultTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TimeVaultTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E73797CF3010107600408BFA /* Time Machine Analyzer.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = "Time Machine Analyzer.icon"; sourceTree = "<group>"; };
@@ -91,6 +95,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A035 /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -124,6 +129,7 @@
 			isa = PBXGroup;
 			children = (
 				B001 /* TimeVaultApp.swift */,
+				B032 /* Info.plist */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -202,8 +208,17 @@
 				E007 /* Persistence */,
 				E008 /* SnapshotDiscovery */,
 				E016 /* SystemStatus */,
+				E017 /* Updates */,
 			);
 			path = Services;
+			sourceTree = "<group>";
+		};
+		E017 /* Updates */ = {
+			isa = PBXGroup;
+			children = (
+				B031 /* UpdateController.swift */,
+			);
+			path = Updates;
 			sourceTree = "<group>";
 		};
 		E011 /* Utilities */ = {
@@ -271,6 +286,9 @@
 			dependencies = (
 			);
 			name = TimeVault;
+			packageProductDependencies = (
+				L001 /* Sparkle */,
+			);
 			productName = TimeVault;
 			productReference = C001 /* TimeVault.app */;
 			productType = "com.apple.product-type.application";
@@ -317,6 +335,9 @@
 				en,
 			);
 			mainGroup = E001;
+			packageReferences = (
+				M001 /* XCRemoteSwiftPackageReference "Sparkle" */,
+			);
 			productRefGroup = E015 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -370,6 +391,7 @@
 				A030 /* SystemSnapshot.swift in Sources */,
 				A031 /* SystemStatusService.swift in Sources */,
 				A032 /* DashboardView.swift in Sources */,
+				A034 /* UpdateController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -401,9 +423,8 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CURRENT_PROJECT_VERSION = 1.0.0;
 				ENABLE_TESTABILITY = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = TimeVault;
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = App/Info.plist;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.minimackstudios.TimeVault;
@@ -420,9 +441,8 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = "Time Machine Analyzer";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CURRENT_PROJECT_VERSION = 1.0.0;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = TimeVault;
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = App/Info.plist;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.minimackstudios.TimeVault;
@@ -511,6 +531,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		M001 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.9.2;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		L001 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = M001 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = J001 /* Project object */;
 }

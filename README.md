@@ -14,9 +14,6 @@ and metadata-only items, logical size changes, and the folders responsible.
 
 The app does not modify, delete, restore, or write to backup content.
 
-TimeVault can open Finder at the startup disk and launch the system Time
-Machine browser, where local snapshots can be explored using Apple's timeline.
-
 ## Build
 
 Open `TimeVault.xcodeproj` in Xcode and run the `TimeVault`
@@ -34,6 +31,14 @@ xcodebuild \
   build \
   CODE_SIGNING_ALLOWED=NO
 ```
+
+To build the customized release DMG and signed automatic-update feed:
+
+```sh
+./Scripts/build-dmg.sh
+```
+
+See [`UPDATING.md`](UPDATING.md) for the complete GitHub release workflow.
 
 To compile the unit-test target without running it:
 
@@ -53,6 +58,12 @@ Select a mounted backup volume through the app so macOS can grant a
 security-scoped read permission. Some backup locations also require Full Disk
 Access in System Settings under Privacy & Security. The app verifies access and
 reports failures without attempting to bypass macOS protections.
+
+## Software updates
+
+TimeVault uses Sparkle 2 for native automatic updates. It checks once per day
+by default, can download and install signed updates automatically, and also
+provides Check for Updates in the application menu and General settings.
 
 ## Time Machine support
 

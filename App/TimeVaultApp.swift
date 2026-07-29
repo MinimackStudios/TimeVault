@@ -4,6 +4,7 @@ import SwiftUI
 @main
 struct TimeVaultApp: App {
     @StateObject private var viewModel = AppViewModel()
+    @StateObject private var updateController = UpdateController()
     @State private var showingAbout = false
 
     init() {
@@ -26,10 +27,20 @@ struct TimeVaultApp: App {
                 Button("About TimeVault") {
                     showingAbout = true
                 }
+
+                Divider()
+
+                Button("Check for Updates…") {
+                    updateController.checkForUpdates()
+                }
+                .disabled(!updateController.canCheckForUpdates)
             }
         }
         Settings {
-            SettingsView(viewModel: viewModel)
+            SettingsView(
+                viewModel: viewModel,
+                updateController: updateController
+            )
         }
     }
 }
