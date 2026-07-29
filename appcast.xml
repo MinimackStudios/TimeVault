@@ -20,7 +20,7 @@
 Edit this file before building each public release. Its contents are embedded
 in the signed Sparkle appcast and shown in the native update window.
 ]]></description>
-            <enclosure url="https://github.com/MinimackStudios/TimeVault/releases/download/v1.0.0/TimeVault%201.0.0.dmg" length="3950939" type="application/octet-stream" sparkle:edSignature="nMRfVBxhnV5S98fMDg+FrxjfnEpgUER+sZL33xijWAjTNOAzk4XKnA1OO6SC+TilFAUWTWU9Cujs9/070OyZDw=="/>
+            <enclosure url="https://github.com/MinimackStudios/TimeVault/releases/download/v1.0.0/TimeVault.1.0.0.dmg" length="3950939" type="application/octet-stream" sparkle:edSignature="nMRfVBxhnV5S98fMDg+FrxjfnEpgUER+sZL33xijWAjTNOAzk4XKnA1OO6SC+TilFAUWTWU9Cujs9/070OyZDw=="/>
         </item>
     </channel>
 </rss>
