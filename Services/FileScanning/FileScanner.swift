@@ -3,7 +3,7 @@ import Foundation
 struct FileScanner: Sendable {
     enum Event: Sendable {
         case progress(ScanProgress)
-        case finished([FileMetadata])
+        case finished(FileScanResult)
     }
 
     let fileSystem: any FileSystem
@@ -13,7 +13,7 @@ struct FileScanner: Sendable {
             let worker = Task.detached(priority: .userInitiated) {
                 do {
                     let startedAt = Date()
-                    let records = try fileSystem.scan(root: root) { count in
+                    let result = try fileSystem.scan(root: root) { count in
                         let elapsedTime = max(Date().timeIntervalSince(startedAt), 0.001)
                         continuation.yield(.progress(.init(
                             phase: "Scanning",
@@ -26,7 +26,7 @@ struct FileScanner: Sendable {
                         )))
                     }
                     try Task.checkCancellation()
-                    continuation.yield(.finished(records))
+                    continuation.yield(.finished(result))
                     continuation.finish()
                 } catch is CancellationError {
                     continuation.finish(throwing: AppError.comparisonCancelled)

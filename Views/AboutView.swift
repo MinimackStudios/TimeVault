@@ -17,25 +17,25 @@ struct AboutView: View {
                 .scaledToFit()
                 .frame(width: 112, height: 112)
                 .shadow(color: .black.opacity(0.16), radius: 5, y: 2)
-                .accessibilityLabel("Time Machine Analyzer icon")
+                .accessibilityLabel("TimeVault icon")
 
             VStack(spacing: 5) {
-                Text("Time Machine Analyzer")
+                Text("TimeVault")
                     .font(.title.bold())
                 Text(version)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
 
-            Text("A read-only macOS utility for exploring local Time Machine backup snapshots and understanding what changed between them.")
+            Text("A read-only macOS utility for monitoring Time Machine protection, browsing snapshots, and comparing backup history when needed.")
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 380)
 
             VStack(alignment: .leading, spacing: 12) {
-                AboutFeatureRow(icon: "clock.arrow.circlepath", title: "Compare snapshots", detail: "See added, removed, and modified files.")
-                AboutFeatureRow(icon: "chart.bar.xaxis", title: "Understand changes", detail: "Review logical size totals and folder impact.")
+                AboutFeatureRow(icon: "rectangle.3.group", title: "Monitor protection", detail: "Review backup activity, local snapshots, and startup-disk capacity.")
+                AboutFeatureRow(icon: "folder", title: "Browse snapshots", detail: "Explore accessible backup snapshots and compare backup history.")
+                AboutFeatureRow(icon: "arrow.left.and.right", title: "Compare history", detail: "See added, removed, and modified files when you need detail.")
                 AboutFeatureRow(icon: "lock.shield", title: "Read-only by design", detail: "Backup data is never modified, restored, or deleted.")
-                AboutFeatureRow(icon: "externaldrive", title: "Works with local backups", detail: "Browse accessible Time Machine snapshots on mounted drives.")
             }
             .frame(maxWidth: 380, alignment: .leading)
 
@@ -51,7 +51,7 @@ struct AboutView: View {
             .keyboardShortcut(.cancelAction)
         }
         .padding(30)
-        .frame(width: 560, height: 680)
+        .frame(minWidth: 560, idealWidth: 560, minHeight: 650, idealHeight: 650)
     }
 }
 

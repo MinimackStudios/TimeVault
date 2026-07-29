@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		A001 /* TimeMachineAnalyzerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B001 /* TimeMachineAnalyzerApp.swift */; };
+		A001 /* TimeVaultApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B001 /* TimeVaultApp.swift */; };
 		A002 /* AppError.swift in Sources */ = {isa = PBXBuildFile; fileRef = B002 /* AppError.swift */; };
 		A003 /* BackupSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = B003 /* BackupSnapshot.swift */; };
 		A004 /* ComparisonSummary.swift in Sources */ = {isa = PBXBuildFile; fileRef = B004 /* ComparisonSummary.swift */; };
@@ -34,6 +34,12 @@
 		A025 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B025 /* AboutView.swift */; };
 		A028 /* Time Machine Analyzer.icon in Resources */ = {isa = PBXBuildFile; fileRef = E73797CF3010107600408BFA /* Time Machine Analyzer.icon */; };
 		A029 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B026 /* Assets.xcassets */; };
+		A030 /* SystemSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = B027 /* SystemSnapshot.swift */; };
+		A031 /* SystemStatusService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B028 /* SystemStatusService.swift */; };
+		A032 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B029 /* DashboardView.swift */; };
+		A033 /* SystemStatusServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B030 /* SystemStatusServiceTests.swift */; };
+		A034 /* UpdateController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B031 /* UpdateController.swift */; };
+		A035 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = L001 /* Sparkle */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -42,12 +48,12 @@
 			containerPortal = J001 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = F001;
-			remoteInfo = "Time Machine Analyzer";
+			remoteInfo = TimeVault;
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		B001 /* TimeMachineAnalyzerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeMachineAnalyzerApp.swift; sourceTree = "<group>"; };
+		B001 /* TimeVaultApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeVaultApp.swift; sourceTree = "<group>"; };
 		B002 /* AppError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppError.swift; sourceTree = "<group>"; };
 		B003 /* BackupSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupSnapshot.swift; sourceTree = "<group>"; };
 		B004 /* ComparisonSummary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComparisonSummary.swift; sourceTree = "<group>"; };
@@ -73,8 +79,14 @@
 		B024 /* FileScannerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileScannerTests.swift; sourceTree = "<group>"; };
 		B025 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
 		B026 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		C001 /* Time Machine Analyzer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Time Machine Analyzer.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		C002 /* Time Machine Analyzer Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Time Machine Analyzer Tests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		B027 /* SystemSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemSnapshot.swift; sourceTree = "<group>"; };
+		B028 /* SystemStatusService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemStatusService.swift; sourceTree = "<group>"; };
+		B029 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		B030 /* SystemStatusServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemStatusServiceTests.swift; sourceTree = "<group>"; };
+		B031 /* UpdateController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateController.swift; sourceTree = "<group>"; };
+		B032 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		C001 /* TimeVault.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TimeVault.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C002 /* TimeVaultTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TimeVaultTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E73797CF3010107600408BFA /* Time Machine Analyzer.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = "Time Machine Analyzer.icon"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -83,6 +95,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A035 /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -115,7 +128,8 @@
 		E002 /* App */ = {
 			isa = PBXGroup;
 			children = (
-				B001 /* TimeMachineAnalyzerApp.swift */,
+				B001 /* TimeVaultApp.swift */,
+				B032 /* Info.plist */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -164,6 +178,14 @@
 			path = SnapshotDiscovery;
 			sourceTree = "<group>";
 		};
+		E016 /* SystemStatus */ = {
+			isa = PBXGroup;
+			children = (
+				B028 /* SystemStatusService.swift */,
+			);
+			path = SystemStatus;
+			sourceTree = "<group>";
+		};
 		E009 /* Models */ = {
 			isa = PBXGroup;
 			children = (
@@ -172,6 +194,7 @@
 				B004 /* ComparisonSummary.swift */,
 				B005 /* FileChange.swift */,
 				B006 /* FileMetadata.swift */,
+				B027 /* SystemSnapshot.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -184,8 +207,18 @@
 				E006 /* Permissions */,
 				E007 /* Persistence */,
 				E008 /* SnapshotDiscovery */,
+				E016 /* SystemStatus */,
+				E017 /* Updates */,
 			);
 			path = Services;
+			sourceTree = "<group>";
+		};
+		E017 /* Updates */ = {
+			isa = PBXGroup;
+			children = (
+				B031 /* UpdateController.swift */,
+			);
+			path = Updates;
 			sourceTree = "<group>";
 		};
 		E011 /* Utilities */ = {
@@ -213,6 +246,7 @@
 				B021 /* SettingsView.swift */,
 				B022 /* SnapshotSelectionView.swift */,
 				B025 /* AboutView.swift */,
+				B029 /* DashboardView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -222,6 +256,7 @@
 			children = (
 				B023 /* ComparisonEngineTests.swift */,
 				B024 /* FileScannerTests.swift */,
+				B030 /* SystemStatusServiceTests.swift */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -229,8 +264,8 @@
 		E015 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				C001 /* Time Machine Analyzer.app */,
-				C002 /* Time Machine AnalyzerTests.xctest */,
+				C001 /* TimeVault.app */,
+				C002 /* TimeVaultTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -238,9 +273,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		F001 /* Time Machine Analyzer */ = {
+		F001 /* TimeVault */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = G001 /* Build configuration list for PBXNativeTarget "Time Machine Analyzer" */;
+			buildConfigurationList = G001 /* Build configuration list for PBXNativeTarget "TimeVault" */;
 			buildPhases = (
 				H001 /* Sources */,
 				D001 /* Frameworks */,
@@ -250,14 +285,17 @@
 			);
 			dependencies = (
 			);
-			name = "Time Machine Analyzer";
-			productName = "Time Machine Analyzer";
-			productReference = C001 /* Time Machine Analyzer.app */;
+			name = TimeVault;
+			packageProductDependencies = (
+				L001 /* Sparkle */,
+			);
+			productName = TimeVault;
+			productReference = C001 /* TimeVault.app */;
 			productType = "com.apple.product-type.application";
 		};
-		F002 /* Time Machine Analyzer Tests */ = {
+		F002 /* TimeVaultTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = G002 /* Build configuration list for PBXNativeTarget "Time Machine Analyzer Tests" */;
+			buildConfigurationList = G002 /* Build configuration list for PBXNativeTarget "TimeVaultTests" */;
 			buildPhases = (
 				H003 /* Sources */,
 				D002 /* Frameworks */,
@@ -267,9 +305,9 @@
 			dependencies = (
 				I001 /* PBXTargetDependency */,
 			);
-			name = "Time Machine Analyzer Tests";
-			productName = "Time Machine Analyzer Tests";
-			productReference = C002 /* Time Machine Analyzer Tests.xctest */;
+			name = TimeVaultTests;
+			productName = TimeVaultTests;
+			productReference = C002 /* TimeVaultTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
@@ -289,7 +327,7 @@
 					};
 				};
 			};
-			buildConfigurationList = G003 /* Build configuration list for PBXProject "Time Machine Analyzer" */;
+			buildConfigurationList = G003 /* Build configuration list for PBXProject "TimeVault" */;
 			compatibilityVersion = "Xcode 16.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -297,12 +335,15 @@
 				en,
 			);
 			mainGroup = E001;
+			packageReferences = (
+				M001 /* XCRemoteSwiftPackageReference "Sparkle" */,
+			);
 			productRefGroup = E015 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				F001 /* Time Machine Analyzer */,
-				F002 /* Time Machine Analyzer Tests */,
+				F001 /* TimeVault */,
+				F002 /* TimeVaultTests */,
 			);
 		};
 /* End PBXProject section */
@@ -324,7 +365,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A001 /* TimeMachineAnalyzerApp.swift in Sources */,
+				A001 /* TimeVaultApp.swift in Sources */,
 				A002 /* AppError.swift in Sources */,
 				A003 /* BackupSnapshot.swift in Sources */,
 				A004 /* ComparisonSummary.swift in Sources */,
@@ -347,6 +388,10 @@
 				A021 /* SettingsView.swift in Sources */,
 				A022 /* SnapshotSelectionView.swift in Sources */,
 				A025 /* AboutView.swift in Sources */,
+				A030 /* SystemSnapshot.swift in Sources */,
+				A031 /* SystemStatusService.swift in Sources */,
+				A032 /* DashboardView.swift in Sources */,
+				A034 /* UpdateController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -356,6 +401,7 @@
 			files = (
 				A023 /* ComparisonEngineTests.swift in Sources */,
 				A024 /* FileScannerTests.swift in Sources */,
+				A033 /* SystemStatusServiceTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -364,7 +410,7 @@
 /* Begin PBXTargetDependency section */
 		I001 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = F001 /* Time Machine Analyzer */;
+			target = F001 /* TimeVault */;
 			targetProxy = I002 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -377,14 +423,13 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CURRENT_PROJECT_VERSION = 1.0.0;
 				ENABLE_TESTABILITY = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "Time Machine Analyzer";
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = App/Info.plist;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MARKETING_VERSION = 1.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.minimackstudios.TimeMachineAnalyzer;
-				PRODUCT_MODULE_NAME = TimeMachineAnalyzer;
-				PRODUCT_NAME = "Time Machine Analyzer";
+				PRODUCT_BUNDLE_IDENTIFIER = com.minimackstudios.TimeVault;
+				PRODUCT_MODULE_NAME = TimeVault;
+				PRODUCT_NAME = TimeVault;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 			};
@@ -396,14 +441,13 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = "Time Machine Analyzer";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CURRENT_PROJECT_VERSION = 1.0.0;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "Time Machine Analyzer";
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = App/Info.plist;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MARKETING_VERSION = 1.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.minimackstudios.TimeMachineAnalyzer;
-				PRODUCT_MODULE_NAME = TimeMachineAnalyzer;
-				PRODUCT_NAME = "Time Machine Analyzer";
+				PRODUCT_BUNDLE_IDENTIFIER = com.minimackstudios.TimeVault;
+				PRODUCT_MODULE_NAME = TimeVault;
+				PRODUCT_NAME = TimeVault;
 				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
@@ -414,10 +458,10 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.minimackstudios.TimeMachineAnalyzerTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.minimackstudios.TimeVaultTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Time Machine Analyzer.app/Contents/MacOS/Time Machine Analyzer";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/TimeVault.app/Contents/MacOS/TimeVault";
 			};
 			name = Debug;
 		};
@@ -427,10 +471,10 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.minimackstudios.TimeMachineAnalyzerTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.minimackstudios.TimeVaultTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Time Machine Analyzer.app/Contents/MacOS/Time Machine Analyzer";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/TimeVault.app/Contents/MacOS/TimeVault";
 			};
 			name = Release;
 		};
@@ -459,7 +503,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		G001 /* Build configuration list for PBXNativeTarget "Time Machine Analyzer" */ = {
+		G001 /* Build configuration list for PBXNativeTarget "TimeVault" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				K001 /* Debug */,
@@ -468,7 +512,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		G002 /* Build configuration list for PBXNativeTarget "Time Machine Analyzer Tests" */ = {
+		G002 /* Build configuration list for PBXNativeTarget "TimeVaultTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				K003 /* Debug */,
@@ -477,7 +521,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		G003 /* Build configuration list for PBXProject "Time Machine Analyzer" */ = {
+		G003 /* Build configuration list for PBXProject "TimeVault" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				K005 /* Debug */,
@@ -487,6 +531,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		M001 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.9.2;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		L001 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = M001 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = J001 /* Project object */;
 }

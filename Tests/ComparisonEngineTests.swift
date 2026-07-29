@@ -1,6 +1,6 @@
 import Foundation
 import XCTest
-@testable import TimeMachineAnalyzer
+@testable import TimeVault
 
 final class ComparisonEngineTests: XCTestCase {
     func testAddedRemovedModifiedAndMetadataChanges() async throws {
@@ -23,6 +23,7 @@ final class ComparisonEngineTests: XCTestCase {
         XCTAssertEqual(comparison.changes.first(where: { $0.relativePath == "removed.txt" })?.kind, .removed)
         XCTAssertEqual(comparison.changes.first(where: { $0.relativePath == "changed.txt" })?.kind, .modified)
         XCTAssertEqual(comparison.changes.first(where: { $0.relativePath == "permissions.txt" })?.kind, .metadataChanged)
+        XCTAssertEqual(comparison.summary.modifiedCount, 2)
         XCTAssertEqual(comparison.summary.logicalBytesAdded, 7)
         XCTAssertEqual(comparison.summary.logicalBytesRemoved, 4)
         XCTAssertEqual(comparison.summary.logicalBytesModified, 5)
@@ -47,7 +48,9 @@ final class ComparisonEngineTests: XCTestCase {
         defer { try? FileManager.default.removeItem(at: root) }
         try Data("target".utf8).write(to: root.appendingPathComponent("target.txt"))
         try FileManager.default.createSymbolicLink(atPath: root.appendingPathComponent("link.txt").path, withDestinationPath: "target.txt")
-        let records = try LocalFileSystem().scan(root: root, progress: { _ in })
+        let scanResult = try LocalFileSystem().scan(root: root, progress: { _ in })
+        let records = scanResult.records
+        XCTAssertTrue(scanResult.warnings.isEmpty)
         XCTAssertEqual(records.first(where: { $0.relativePath == "link.txt" })?.itemType, .symbolicLink)
         XCTAssertNil(records.first(where: { $0.relativePath == "link.txt/target.txt" }))
     }
@@ -55,12 +58,62 @@ final class ComparisonEngineTests: XCTestCase {
     func testHardLinkedFilesAreNotDoubleCountedInLogicalByteSummary() async throws {
         let old: [FileMetadata] = []
         let new = [
-            metadata("one.txt", size: 8, fileIdentifier: 42),
-            metadata("alias.txt", size: 8, fileIdentifier: 42)
+            metadata("Folder", type: .directory),
+            metadata("Folder/one.txt", size: 8, fileIdentifier: 42),
+            metadata("Folder/alias.txt", size: 8, fileIdentifier: 42)
         ]
         let comparison = try await ComparisonEngine().compare(older: old, newer: new, olderSnapshot: snapshot("old"), newerSnapshot: snapshot("new"), duration: 0, progress: { _ in })
         XCTAssertEqual(comparison.summary.logicalBytesAdded, 8)
         XCTAssertEqual(comparison.summary.addedCount, 2)
+        XCTAssertEqual(comparison.folderImpacts.first(where: { $0.relativePath == "Folder" })?.newLogicalSize, 8)
+    }
+
+    func testFolderImpactsRankLogicalGrowthAndReduction() async throws {
+        let old = [
+            metadata("Documents", type: .directory),
+            metadata("Documents/existing.txt", size: 100),
+            metadata("Photos", type: .directory),
+            metadata("Photos/kept.jpg", size: 100),
+            metadata("Photos/removed.jpg", size: 300),
+            metadata("Stable", type: .directory),
+            metadata("Stable/old.dat", size: 200)
+        ]
+        let new = [
+            metadata("Documents", type: .directory),
+            metadata("Documents/existing.txt", size: 100),
+            metadata("Documents/added.dat", size: 500),
+            metadata("Photos", type: .directory),
+            metadata("Photos/kept.jpg", size: 100),
+            metadata("Stable", type: .directory),
+            metadata("Stable/new.dat", size: 200)
+        ]
+
+        let comparison = try await ComparisonEngine().compare(
+            older: old,
+            newer: new,
+            olderSnapshot: snapshot("old"),
+            newerSnapshot: snapshot("new"),
+            duration: 0,
+            progress: { _ in }
+        )
+
+        XCTAssertEqual(comparison.folderImpacts.count, 2)
+        XCTAssertEqual(
+            comparison.topFolderImpacts(limit: 10, rankedBy: .largestChange).map(\.relativePath),
+            ["Documents", "Photos"]
+        )
+        XCTAssertEqual(
+            comparison.topFolderImpacts(limit: 10, rankedBy: .largestIncrease).map(\.relativePath),
+            ["Documents"]
+        )
+        XCTAssertEqual(
+            comparison.topFolderImpacts(limit: 10, rankedBy: .largestDecrease).map(\.relativePath),
+            ["Photos"]
+        )
+        XCTAssertEqual(
+            comparison.topFolderImpacts(limit: 1, rankedBy: .largestChange).first?.logicalSizeDifference,
+            500
+        )
     }
 
     func testUnreadablePathProducesPermissionError() {
@@ -68,6 +121,20 @@ final class ComparisonEngineTests: XCTestCase {
         guard case .inaccessible = state else {
             return XCTFail("Expected inaccessible permission state")
         }
+    }
+
+    func testPermissionFailureProvidesRecoveryGuidance() {
+        let state = PermissionService().verifyReadAccess(to: URL(fileURLWithPath: "/definitely/not/a/real/backup"))
+        guard case .inaccessible(let detail) = state else {
+            return XCTFail("Expected inaccessible permission state")
+        }
+
+        XCTAssertTrue(detail.contains("Choose Volume"))
+        XCTAssertTrue(detail.contains("Full Disk Access"))
+        XCTAssertEqual(
+            PermissionService.fullDiskAccessSettingsURL?.absoluteString,
+            "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles"
+        )
     }
 
     func testAPFSTimeMachinePathUsesBackupSuffixTimestamp() throws {

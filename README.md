@@ -1,8 +1,10 @@
- # Time Machine Analyzer
+# TimeVault
 
-Time Machine Analyzer is a read-only macOS app for comparing local Time Machine
-backup snapshots. It reports added, removed, modified, and metadata-only items,
-along with logical size changes and the folders responsible for those changes.
+TimeVault is a read-only macOS app for understanding Time Machine protection.
+Its dashboard reports backup activity, startup-disk capacity, and local APFS
+snapshot counts. Its snapshot browser shows local snapshots alongside mounted
+backup snapshots, which can be compared to report added, removed, modified,
+and metadata-only items, logical size changes, and the folders responsible.
 
 ## Requirements
 
@@ -14,7 +16,7 @@ The app does not modify, delete, restore, or write to backup content.
 
 ## Build
 
-Open `Time Machine Analyzer.xcodeproj` in Xcode and run the `Time Machine Analyzer`
+Open `TimeVault.xcodeproj` in Xcode and run the `TimeVault`
 scheme. The project is configured to use the included `Time Machine
 Analyzer.icon` asset and targets macOS 13.
 
@@ -22,20 +24,28 @@ For a command-line build:
 
 ```sh
 xcodebuild \
-  -project "Time Machine Analyzer.xcodeproj" \
-  -scheme "Time Machine Analyzer" \
+  -project "TimeVault.xcodeproj" \
+  -scheme "TimeVault" \
   -configuration Debug \
   -sdk macosx \
   build \
   CODE_SIGNING_ALLOWED=NO
 ```
 
+To build the customized release DMG and signed automatic-update feed:
+
+```sh
+./Scripts/build-dmg.sh
+```
+
+See [`UPDATING.md`](UPDATING.md) for the complete GitHub release workflow.
+
 To compile the unit-test target without running it:
 
 ```sh
 xcodebuild \
-  -project "Time Machine Analyzer.xcodeproj" \
-  -scheme "Time Machine Analyzer" \
+  -project "TimeVault.xcodeproj" \
+  -scheme "TimeVault" \
   -configuration Debug \
   -sdk macosx \
   build-for-testing \
@@ -48,6 +58,12 @@ Select a mounted backup volume through the app so macOS can grant a
 security-scoped read permission. Some backup locations also require Full Disk
 Access in System Settings under Privacy & Security. The app verifies access and
 reports failures without attempting to bypass macOS protections.
+
+## Software updates
+
+TimeVault uses Sparkle 2 for native automatic updates. It checks once per day
+by default, can download and install signed updates automatically, and also
+provides Check for Updates in the application menu and General settings.
 
 ## Time Machine support
 
@@ -67,12 +83,12 @@ The test suite covers comparison classification, path normalization, symbolic
 links, hard-link accounting, permission failures, snapshot timestamp parsing,
 and scanner cancellation. Tests use local metadata and temporary fixture trees.
 
-Run them from Xcode with the `Time Machine Analyzer Tests` target, or use:
+Run them from Xcode with the `TimeVaultTests` target, or use:
 
 ```sh
 xcodebuild \
-  -project "Time Machine Analyzer.xcodeproj" \
-  -scheme "Time Machine Analyzer" \
+  -project "TimeVault.xcodeproj" \
+  -scheme "TimeVault" \
   -configuration Debug \
   -sdk macosx \
   test \
@@ -81,4 +97,4 @@ xcodebuild \
 
 ## License
 
-Time Machine Analyzer is released under the MIT License. See `LICENSE`.
+TimeVault is released under the MIT License. See `LICENSE`.

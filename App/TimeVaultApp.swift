@@ -2,8 +2,9 @@ import AppKit
 import SwiftUI
 
 @main
-struct TimeMachineAnalyzerApp: App {
+struct TimeVaultApp: App {
     @StateObject private var viewModel = AppViewModel()
+    @StateObject private var updateController = UpdateController()
     @State private var showingAbout = false
 
     init() {
@@ -11,7 +12,7 @@ struct TimeMachineAnalyzerApp: App {
     }
 
     var body: some Scene {
-        WindowGroup("Time Machine Analyzer") {
+        WindowGroup("TimeVault") {
             ContentView(viewModel: viewModel)
                 .frame(minWidth: 980, minHeight: 640)
                 .sheet(isPresented: $showingAbout) {
@@ -19,17 +20,27 @@ struct TimeMachineAnalyzerApp: App {
                 }
                 .tint(Color(nsColor: .controlAccentColor))
         }
-        .windowResizability(.contentSize)
+        .windowResizability(.contentMinSize)
         .defaultSize(width: 1_880, height: 1_080)
         .commands {
             CommandGroup(replacing: .appInfo) {
-                Button("About Time Machine Analyzer") {
+                Button("About TimeVault") {
                     showingAbout = true
                 }
+
+                Divider()
+
+                Button("Check for Updates…") {
+                    updateController.checkForUpdates()
+                }
+                .disabled(!updateController.canCheckForUpdates)
             }
         }
         Settings {
-            SettingsView(viewModel: viewModel)
+            SettingsView(
+                viewModel: viewModel,
+                updateController: updateController
+            )
         }
     }
 }

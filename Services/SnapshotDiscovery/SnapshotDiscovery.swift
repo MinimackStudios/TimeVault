@@ -7,19 +7,68 @@ protocol SnapshotDiscoveryStrategy: Sendable {
 struct VolumeValidation: Sendable {
     let isCandidate: Bool
     let detail: String
+    let requiresSnapshotVerification: Bool
 }
 
 struct TimeMachineSnapshotDiscovery: SnapshotDiscoveryStrategy {
     func validate(volume: URL) -> VolumeValidation {
         let fileManager = FileManager.default
-        let values = try? volume.resourceValues(forKeys: [.volumeNameKey, .volumeUUIDStringKey, .volumeIsReadOnlyKey])
-        let hasKnownDirectory = fileManager.fileExists(atPath: volume.appendingPathComponent("Backups.backupdb").path)
-        let volumeName = values?.volumeName ?? volume.lastPathComponent
-        if hasKnownDirectory { return VolumeValidation(isCandidate: true, detail: "Found a Backups.backupdb directory on \(volumeName).") }
-        if volumeName.localizedCaseInsensitiveContains("time machine") {
-            return VolumeValidation(isCandidate: true, detail: "The volume name suggests a Time Machine destination. Snapshot discovery will verify it.")
+        let standardizedVolume = volume.standardizedFileURL
+        let values = try? standardizedVolume.resourceValues(forKeys: [
+            .volumeNameKey,
+            .volumeUUIDStringKey,
+            .volumeIsReadOnlyKey,
+            .volumeURLKey
+        ])
+        let volumeRoot = values?.allValues[.volumeURLKey] as? URL
+        guard standardizedVolume.isFileURL,
+              volumeRoot?.standardizedFileURL == standardizedVolume,
+              fileManager.isReadableFile(atPath: standardizedVolume.path) else {
+            return VolumeValidation(
+                isCandidate: false,
+                detail: "Choose the root of a mounted volume so Time Machine can be verified safely.",
+                requiresSnapshotVerification: false
+            )
         }
-        return VolumeValidation(isCandidate: false, detail: "No recognized Time Machine directory was found on \(volumeName).")
+
+        let volumeName = values?.volumeName ?? standardizedVolume.lastPathComponent
+        if let evidence = Self.timeMachineEvidence(at: standardizedVolume, volumeName: volumeName) {
+            return VolumeValidation(isCandidate: true, detail: evidence, requiresSnapshotVerification: false)
+        }
+
+        return VolumeValidation(
+            isCandidate: true,
+            detail: "This mounted volume will be verified with read-only Time Machine discovery.",
+            requiresSnapshotVerification: true
+        )
+    }
+
+    func isSidebarCandidate(volume: URL) -> Bool {
+        let standardizedVolume = volume.standardizedFileURL
+        guard let values = try? standardizedVolume.resourceValues(forKeys: [.volumeNameKey, .volumeURLKey]),
+              let volumeRoot = values.allValues[.volumeURLKey] as? URL,
+              volumeRoot.standardizedFileURL == standardizedVolume else {
+            return false
+        }
+
+        let volumeName = values.volumeName ?? standardizedVolume.lastPathComponent
+        return Self.timeMachineEvidence(at: standardizedVolume, volumeName: volumeName) != nil
+    }
+
+    static func timeMachineEvidence(at volume: URL, volumeName: String) -> String? {
+        let fileManager = FileManager.default
+        let markers: [(String, String)] = [
+            ("Backups.backupdb", "Found a Backups.backupdb directory"),
+            (".timemachine", "Found the APFS .timemachine directory"),
+            (".com.apple.timemachine.donotpresent", "Found the APFS Time Machine marker")
+        ]
+        for (path, description) in markers where fileManager.fileExists(atPath: volume.appendingPathComponent(path).path) {
+            return "\(description) on \(volumeName)."
+        }
+        if volumeName.localizedCaseInsensitiveContains("time machine") {
+            return "The volume name suggests a Time Machine destination. Snapshot discovery will verify it."
+        }
+        return nil
     }
 
     func discover(on volume: URL) async throws -> [BackupSnapshot] {
@@ -74,28 +123,14 @@ struct TimeMachineSnapshotDiscovery: SnapshotDiscoveryStrategy {
 
 struct TMUtilRunner: Sendable {
     func listBackups(on volume: URL) async throws -> [String] {
-        try await withCheckedThrowingContinuation { continuation in
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: "/usr/bin/tmutil")
-            process.arguments = ["listbackups", "-d", volume.path, "-m"]
-            let output = Pipe()
-            let error = Pipe()
-            process.standardOutput = output
-            process.standardError = error
-            do {
-                try process.run()
-                process.waitUntilExit()
-                let stdout = String(data: output.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
-                let stderr = String(data: error.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
-                guard process.terminationStatus == 0 else {
-                    continuation.resume(throwing: AppError.tmutilFailed(stderr.trimmingCharacters(in: .whitespacesAndNewlines)))
-                    return
-                }
-                let paths = stdout.split(whereSeparator: \.isNewline).map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }
-                continuation.resume(returning: paths)
-            } catch {
-                continuation.resume(throwing: AppError.tmutilFailed(error.localizedDescription))
-            }
-        }
+        let stdout = try await SystemCommandRunner().run(
+            "/usr/bin/tmutil",
+            arguments: ["listbackups", "-d", volume.path, "-m"]
+        )
+        return stdout
+            .split(whereSeparator: \.isNewline)
+            .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
     }
+
 }

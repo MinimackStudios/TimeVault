@@ -4,14 +4,20 @@ import OSLog
 import SwiftUI
 
 enum AppSection: Hashable {
-    case welcome
-    case snapshots
+    case dashboard
+    case snapshots(URL?)
     case comparison
 }
 
 @MainActor
 final class AppViewModel: ObservableObject {
-    @Published var section: AppSection = .welcome
+    typealias ComparisonOperation = @Sendable (
+        BackupSnapshot,
+        BackupSnapshot,
+        @escaping @Sendable (ScanProgress) async -> Void
+    ) async throws -> SnapshotComparison
+
+    @Published var section: AppSection = .dashboard
     @Published var mountedVolumes: [URL] = []
     @Published var selectedVolume: URL?
     @Published var snapshots: [BackupSnapshot] = []
@@ -28,20 +34,40 @@ final class AppViewModel: ObservableObject {
     @Published var permissionState: PermissionState = .unknown
     @Published var errorMessage: String?
     @Published var diagnostics: String?
+    @Published var systemOverview: SystemOverview?
+    @Published var localSnapshots: [LocalSnapshot] = []
+    @Published var localSnapshotStatus: LocalSnapshotDiscoveryStatus = .unavailable
+    @Published var isRefreshingSystemOverview = false
 
     private let discovery = TimeMachineSnapshotDiscovery()
     private let permissions = PermissionService()
     private let bookmarks = SecurityScopedBookmarkStore()
     private let exportService = ExportService()
-    private let logger = Logger(subsystem: "com.example.TimeMachineAnalyzer", category: "workflow")
+    private let systemStatus = SystemStatusService()
+    private let comparisonOperation: ComparisonOperation
+    private let logger = Logger(subsystem: "com.minimackstudios.TimeVault", category: "workflow")
     private var comparisonTask: Task<Void, Never>?
+    private var activeComparisonID: UUID?
     private var activeSecurityScopedURL: URL?
     private var filteredChangesCache: [FileChange] = []
     private var filteredChangesCacheIsValid = false
 
-    init() {
-        mountedVolumes = bookmarks.restore()
-        refreshMountedVolumes()
+    init(
+        comparisonOperation: @escaping ComparisonOperation = { olderSnapshot, newerSnapshot, progress in
+            try await AppViewModel.performComparison(
+                olderSnapshot: olderSnapshot,
+                newerSnapshot: newerSnapshot,
+                progress: progress
+            )
+        },
+        performInitialRefresh: Bool = true
+    ) {
+        self.comparisonOperation = comparisonOperation
+        if performInitialRefresh {
+            mountedVolumes = bookmarks.restore()
+            refreshMountedVolumes()
+            refreshSystemOverview()
+        }
     }
 
     deinit {
@@ -76,6 +102,11 @@ final class AppViewModel: ObservableObject {
         return filteredChangesCache
     }
 
+    var shouldShowPermissionRecovery: Bool {
+        if case .inaccessible = permissionState { return true }
+        return false
+    }
+
     private func invalidateFilteredChangesCache() {
         filteredChangesCacheIsValid = false
     }
@@ -83,9 +114,42 @@ final class AppViewModel: ObservableObject {
     func refreshMountedVolumes() {
         let urls = FileManager.default.mountedVolumeURLs(includingResourceValuesForKeys: [.volumeNameKey, .volumeIsRemovableKey], options: [.skipHiddenVolumes]) ?? []
         let candidates = Array(Set(mountedVolumes + urls)).filter { volume in
-            discovery.validate(volume: volume).isCandidate
+            discovery.isSidebarCandidate(volume: volume)
         }
         mountedVolumes = candidates.sorted { $0.path < $1.path }
+    }
+
+    func refreshSystemOverview() {
+        guard !isRefreshingSystemOverview else { return }
+        isRefreshingSystemOverview = true
+        Task { [weak self] in
+            guard let self else { return }
+            let dashboard = await self.systemStatus.loadDashboard()
+            self.systemOverview = dashboard.overview
+            self.localSnapshots = dashboard.localSnapshots
+            self.localSnapshotStatus = dashboard.overview.localSnapshotStatus
+            self.isRefreshingSystemOverview = false
+        }
+    }
+
+    func navigate(to destination: AppSection) {
+        switch destination {
+        case .snapshots(let volume):
+            section = destination
+            guard let volume else { return }
+            if selectedVolume != volume {
+                selectVolume(volume)
+                discoverSnapshots()
+            } else if snapshots.isEmpty, !isDiscovering {
+                discoverSnapshots()
+            }
+        case .dashboard, .comparison:
+            section = destination
+        }
+    }
+
+    func showSnapshotBrowser() {
+        navigate(to: .snapshots(selectedVolume ?? mountedVolumes.first))
     }
 
     func chooseBackupVolume() {
@@ -99,8 +163,13 @@ final class AppViewModel: ObservableObject {
         selectVolume(url)
         guard case .verified = permissionState else { return }
         try? bookmarks.save(url: url)
-        section = .snapshots
+        section = .snapshots(url)
         discoverSnapshots()
+    }
+
+    func openFullDiskAccessSettings() {
+        guard let url = PermissionService.fullDiskAccessSettingsURL else { return }
+        NSWorkspace.shared.open(url)
     }
 
     func chooseFolderSnapshot(isOlder: Bool) {
@@ -112,9 +181,19 @@ final class AppViewModel: ObservableObject {
         guard panel.runModal() == .OK, let url = panel.url else { return }
         let values = try? url.resourceValues(forKeys: [.contentModificationDateKey])
         let date = values?.contentModificationDate ?? Date()
-        let snapshot = BackupSnapshot(date: date, backupVolume: url.deletingLastPathComponent().lastPathComponent, machineName: Host.current().localizedName, url: url, identifier: url.path)
+        let normalizedURL = url.standardizedFileURL
+        let snapshot = snapshots.first(where: { $0.url.standardizedFileURL == normalizedURL }) ?? BackupSnapshot(
+            date: date,
+            backupVolume: url.deletingLastPathComponent().lastPathComponent,
+            machineName: "Custom folder",
+            url: normalizedURL,
+            identifier: normalizedURL.path
+        )
+        if !snapshots.contains(where: { $0.url.standardizedFileURL == normalizedURL }) {
+            snapshots.append(snapshot)
+        }
         if isOlder { olderSnapshot = snapshot } else { newerSnapshot = snapshot }
-        section = .snapshots
+        section = .snapshots(selectedVolume)
     }
 
     func discoverSnapshots() {
@@ -157,25 +236,35 @@ final class AppViewModel: ObservableObject {
             return
         }
         comparisonTask?.cancel()
+        let comparisonID = UUID()
+        activeComparisonID = comparisonID
         isComparing = true
         comparison = nil
         errorMessage = nil
         progress = ScanProgress(phase: "Preparing", rootName: "Snapshots", itemsScanned: 0, estimatedItemCount: nil, elapsedTime: 0, itemsPerSecond: 0, startedAt: Date())
-        let service = ComparisonService(scanner: FileScanner(fileSystem: LocalFileSystem()), engine: ComparisonEngine())
+        let operation = comparisonOperation
         comparisonTask = Task.detached(priority: .userInitiated) { [weak self] in
             guard let self else { return }
             do {
-                let result = try await service.compare(olderSnapshot: olderSnapshot, newerSnapshot: newerSnapshot) { progress in
-                    await MainActor.run { self.progress = progress }
+                let result = try await operation(olderSnapshot, newerSnapshot) { progress in
+                    await MainActor.run {
+                        guard self.activeComparisonID == comparisonID else { return }
+                        self.progress = progress
+                    }
                 }
                 await MainActor.run {
+                    guard self.activeComparisonID == comparisonID else { return }
                     self.comparison = result
                     self.section = .comparison
                     self.logger.info("Comparison completed with \(result.changes.count) changed paths")
                     self.isComparing = false
+                    self.progress = nil
+                    self.comparisonTask = nil
+                    self.activeComparisonID = nil
                 }
             } catch {
                 await MainActor.run {
+                    guard self.activeComparisonID == comparisonID else { return }
                     if case AppError.comparisonCancelled = error {
                         self.errorMessage = nil
                         self.diagnostics = nil
@@ -183,17 +272,38 @@ final class AppViewModel: ObservableObject {
                         self.present(error)
                     }
                     self.isComparing = false
+                    self.progress = nil
+                    self.comparisonTask = nil
+                    self.activeComparisonID = nil
                 }
             }
         }
     }
 
     func cancelComparison() {
+        activeComparisonID = nil
         comparisonTask?.cancel()
+        comparisonTask = nil
         isComparing = false
         progress = nil
         errorMessage = nil
         diagnostics = nil
+    }
+
+    nonisolated private static func performComparison(
+        olderSnapshot: BackupSnapshot,
+        newerSnapshot: BackupSnapshot,
+        progress: @escaping @Sendable (ScanProgress) async -> Void
+    ) async throws -> SnapshotComparison {
+        let service = ComparisonService(
+            scanner: FileScanner(fileSystem: LocalFileSystem()),
+            engine: ComparisonEngine()
+        )
+        return try await service.compare(
+            olderSnapshot: olderSnapshot,
+            newerSnapshot: newerSnapshot,
+            progress: progress
+        )
     }
 
     func exportJSON() { export(extension: "json") { try exportService.writeJSON($0, to: $1) } }
@@ -211,6 +321,16 @@ final class AppViewModel: ObservableObject {
         NSWorkspace.shared.activateFileViewerSelecting([base.appendingPathComponent(change.relativePath)])
     }
 
+    func revealFolderImpactInFinder(_ impact: FolderImpact) {
+        let base = impact.newLogicalSize > 0 ? newerSnapshot?.url : olderSnapshot?.url
+        guard let base else { return }
+        NSWorkspace.shared.activateFileViewerSelecting([base.appendingPathComponent(impact.relativePath)])
+    }
+
+    func revealSnapshotInFinder(_ snapshot: BackupSnapshot) {
+        NSWorkspace.shared.activateFileViewerSelecting([snapshot.url])
+    }
+
     private func export(extension fileExtension: String, action: (SnapshotComparison, URL) throws -> Void) {
         guard let comparison else { return }
         let panel = NSSavePanel()
@@ -223,7 +343,10 @@ final class AppViewModel: ObservableObject {
     private func present(_ error: Error) {
         errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         diagnostics = String(describing: error)
-        logger.error("Workflow error: \(String(describing: error), privacy: .public)")
+        if case AppError.permissionDenied(let url) = error {
+            permissionState = permissions.verifyReadAccess(to: url)
+        }
+        logger.error("Workflow error: \(String(describing: error), privacy: .private)")
     }
 }
 

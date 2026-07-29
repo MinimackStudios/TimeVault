@@ -19,7 +19,8 @@ enum AppError: LocalizedError, Sendable {
         case .snapshotUnavailable: return "A selected snapshot is no longer available. The backup may have been disconnected or changed."
         case .driveDisconnected: return "The backup drive appears to have been disconnected."
         case .metadataReadFailed(_, let detail): return "Some file metadata could not be read. \(detail)"
-        case .tmutilFailed(let detail): return "Time Machine could not list backups. \(detail)"
+        case .tmutilFailed(let detail):
+            return detail.isEmpty ? "Time Machine could not complete the requested operation." : "Time Machine could not complete the requested operation. \(detail)"
         case .comparisonCancelled: return "The comparison was cancelled."
         case .invalidCache(let detail): return "The cached metadata is unavailable or corrupt. \(detail)"
         }

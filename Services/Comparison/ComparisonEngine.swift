@@ -99,6 +99,7 @@ struct ComparisonEngine: Sendable {
         let added = changes.filter { $0.kind == .added && !$0.isFolder }
         let removed = changes.filter { $0.kind == .removed && !$0.isFolder }
         let changed = changes.filter { [.modified, .typeChanged, .metadataChanged].contains($0.kind) && !$0.isFolder }
+        let contentChanged = changed.filter { [.modified, .typeChanged].contains($0.kind) }
         let summary = ComparisonSummary(
             addedCount: added.count,
             removedCount: removed.count,
@@ -106,10 +107,29 @@ struct ComparisonEngine: Sendable {
             folderChangeCount: changes.filter { $0.isFolder }.count,
             logicalBytesAdded: uniqueByteTotal(added, metadata: { $0.newMetadata }),
             logicalBytesRemoved: uniqueByteTotal(removed, metadata: { $0.oldMetadata }),
-            logicalBytesModified: uniqueByteTotal(changed, metadata: { $0.newMetadata ?? $0.oldMetadata }),
+            logicalBytesModified: uniqueByteTotal(contentChanged, metadata: { $0.newMetadata ?? $0.oldMetadata }),
             duration: duration
         )
-        return SnapshotComparison(olderSnapshot: olderSnapshot, newerSnapshot: newerSnapshot, changes: changes, summary: summary, warnings: [])
+        let folderImpacts = Set(oldFolderSizes.keys)
+            .union(newFolderSizes.keys)
+            .compactMap { path -> FolderImpact? in
+                let oldSize = oldFolderSizes[path] ?? 0
+                let newSize = newFolderSizes[path] ?? 0
+                guard oldSize != newSize else { return nil }
+                return FolderImpact(
+                    relativePath: path,
+                    oldLogicalSize: oldSize,
+                    newLogicalSize: newSize
+                )
+            }
+        return SnapshotComparison(
+            olderSnapshot: olderSnapshot,
+            newerSnapshot: newerSnapshot,
+            changes: changes,
+            folderImpacts: folderImpacts,
+            summary: summary,
+            warnings: []
+        )
     }
 
     private func contentChanged(_ old: FileMetadata, _ new: FileMetadata) -> Bool {

@@ -1,29 +1,17 @@
-import AppKit
 import SwiftUI
 
 struct SettingsView: View {
     @ObservedObject var viewModel: AppViewModel
+    @ObservedObject var updateController: UpdateController
     @State private var selection: SettingsPane = .general
 
     var body: some View {
         TabView(selection: $selection) {
-            GeneralSettingsPane()
+            GeneralSettingsPane(updateController: updateController)
                 .tabItem {
                     Label("General", systemImage: "gearshape")
                 }
                 .tag(SettingsPane.general)
-
-            ComparisonSettingsPane()
-                .tabItem {
-                    Label("Comparison", systemImage: "arrow.left.and.right")
-                }
-                .tag(SettingsPane.comparison)
-
-            StorageSettingsPane()
-                .tabItem {
-                    Label("Storage", systemImage: "externaldrive")
-                }
-                .tag(SettingsPane.storage)
 
             AccessSettingsPane(viewModel: viewModel)
                 .tabItem {
@@ -32,18 +20,17 @@ struct SettingsView: View {
                 .tag(SettingsPane.access)
         }
         .tabViewStyle(.automatic)
-        .frame(width: 720, height: 500)
+        .frame(minWidth: 720, idealWidth: 720, minHeight: 500, idealHeight: 500)
     }
 }
 
 private enum SettingsPane: Hashable {
     case general
-    case comparison
-    case storage
     case access
 }
 
 private struct GeneralSettingsPane: View {
+    @ObservedObject var updateController: UpdateController
     @AppStorage("showSnapshotPaths") private var showSnapshotPaths = true
     @AppStorage("showDetailedScanProgress") private var showDetailedScanProgress = true
 
@@ -66,46 +53,72 @@ private struct GeneralSettingsPane: View {
                     systemImage: "chart.bar.xaxis"
                 )
             }
+
+            Divider()
+
+            UpdaterSettingsSection(updateController: updateController)
         }
     }
 }
 
-private struct ComparisonSettingsPane: View {
-    @AppStorage("deepComparisonEnabled") private var deepComparisonEnabled = false
+private struct UpdaterSettingsSection: View {
+    @ObservedObject var updateController: UpdateController
+    @State private var automaticallyChecksForUpdates: Bool
+    @State private var automaticallyDownloadsUpdates: Bool
 
-    var body: some View {
-        SettingsPaneContent(
-            title: "Comparison",
-            subtitle: "Choose how deeply the app should inspect differences between two snapshots.")
-        {
-            Toggle(isOn: $deepComparisonEnabled) {
-                SettingsToggleLabel(
-                    title: "Deeper comparison",
-                    detail: "Use checksums when file metadata cannot clearly determine a change.",
-                    systemImage: "magnifyingglass"
-                )
-            }
-            SettingsFootnote("Checksums are off by default because a backup can contain millions of files. This preference is reserved for a future opt-in scan mode.")
-        }
+    init(updateController: UpdateController) {
+        self.updateController = updateController
+        _automaticallyChecksForUpdates = State(
+            initialValue: updateController.automaticallyChecksForUpdates
+        )
+        _automaticallyDownloadsUpdates = State(
+            initialValue: updateController.automaticallyDownloadsUpdates
+        )
     }
-}
-
-private struct StorageSettingsPane: View {
-    @AppStorage("cacheMetadataEnabled") private var cacheMetadataEnabled = true
 
     var body: some View {
-        SettingsPaneContent(
-            title: "Storage",
-            subtitle: "Control whether local metadata is retained to speed up repeat comparisons.")
-        {
-            Toggle(isOn: $cacheMetadataEnabled) {
-                SettingsToggleLabel(
-                    title: "Cache file metadata",
-                    detail: "Keep a local index to make repeat comparisons faster.",
-                    systemImage: "externaldrive"
-                )
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: "arrow.triangle.2.circlepath")
+                    .foregroundStyle(.tint)
+                    .frame(width: 22)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Software Updates")
+                        .font(.body.weight(.medium))
+                    Text("TimeVault can check for signed updates and install them when you are ready.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer(minLength: 12)
+
+                Button("Check Now") {
+                    updateController.checkForUpdates()
+                }
+                .buttonStyle(.bordered)
+                .disabled(!updateController.canCheckForUpdates)
             }
-            SettingsFootnote("The cache contains metadata only. Time Machine file contents are never copied into it.")
+
+            Toggle(
+                "Automatically check for updates",
+                isOn: $automaticallyChecksForUpdates
+            )
+            .onChange(of: automaticallyChecksForUpdates) { newValue in
+                updateController.setAutomaticallyChecksForUpdates(newValue)
+                if !newValue {
+                    automaticallyDownloadsUpdates = false
+                }
+            }
+
+            Toggle(
+                "Download and install updates automatically",
+                isOn: $automaticallyDownloadsUpdates
+            )
+            .disabled(!automaticallyChecksForUpdates)
+            .onChange(of: automaticallyDownloadsUpdates) { newValue in
+                updateController.setAutomaticallyDownloadsUpdates(newValue)
+            }
         }
     }
 }
@@ -130,7 +143,7 @@ private struct AccessSettingsPane: View {
                 detail: "Open macOS Privacy & Security settings if protected backup folders cannot be read.",
                 systemImage: "checkmark.shield",
                 actionTitle: "Open Settings…",
-                action: openFullDiskAccessSettings
+                action: viewModel.openFullDiskAccessSettings
             )
             SettingsActionRow(
                 title: "Detected drives",
@@ -164,10 +177,6 @@ private struct AccessSettingsPane: View {
         return "No backup volume is currently selected."
     }
 
-    private func openFullDiskAccessSettings() {
-        guard let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles") else { return }
-        NSWorkspace.shared.open(url)
-    }
 }
 
 private struct SettingsPaneContent<Content: View>: View {
@@ -271,20 +280,5 @@ private struct SettingsActionRow: View {
             Button(actionTitle, action: action)
                 .buttonStyle(.bordered)
         }
-    }
-}
-
-private struct SettingsFootnote: View {
-    let text: String
-
-    init(_ text: String) {
-        self.text = text
-    }
-
-    var body: some View {
-        Text(text)
-            .font(.caption)
-            .foregroundStyle(.secondary)
-            .fixedSize(horizontal: false, vertical: true)
     }
 }

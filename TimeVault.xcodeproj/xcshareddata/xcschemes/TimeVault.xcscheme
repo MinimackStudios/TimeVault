@@ -16,9 +16,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "F001"
-               BuildableName = "Time Machine Analyzer.app"
-               BlueprintName = "Time Machine Analyzer"
-               ReferencedContainer = "container:Time Machine Analyzer.xcodeproj">
+               BuildableName = "TimeVault.app"
+               BlueprintName = "TimeVault"
+               ReferencedContainer = "container:TimeVault.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -36,9 +36,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "F002"
-               BuildableName = "Time Machine Analyzer Tests.xctest"
-               BlueprintName = "Time Machine Analyzer Tests"
-               ReferencedContainer = "container:Time Machine Analyzer.xcodeproj">
+               BuildableName = "TimeVaultTests.xctest"
+               BlueprintName = "TimeVaultTests"
+               ReferencedContainer = "container:TimeVault.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -59,9 +59,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "F001"
-            BuildableName = "Time Machine Analyzer.app"
-            BlueprintName = "Time Machine Analyzer"
-            ReferencedContainer = "container:Time Machine Analyzer.xcodeproj">
+            BuildableName = "TimeVault.app"
+            BlueprintName = "TimeVault"
+            ReferencedContainer = "container:TimeVault.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -76,9 +76,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "F001"
-            BuildableName = "Time Machine Analyzer.app"
-            BlueprintName = "Time Machine Analyzer"
-            ReferencedContainer = "container:Time Machine Analyzer.xcodeproj">
+            BuildableName = "TimeVault.app"
+            BlueprintName = "TimeVault"
+            ReferencedContainer = "container:TimeVault.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
