@@ -17,10 +17,10 @@ final class FileScannerTests: XCTestCase {
         let first = testSnapshot(identifier: "first", timestamp: 200)
         let second = testSnapshot(identifier: "second", timestamp: 300)
 
-        viewModel.olderSnapshot = older
-        viewModel.newerSnapshot = first
+        viewModel.selectSnapshot(older, as: .older)
+        viewModel.selectSnapshot(first, as: .newer)
         viewModel.compareSnapshots()
-        viewModel.newerSnapshot = second
+        viewModel.selectSnapshot(second, as: .newer)
         viewModel.compareSnapshots()
 
         try await Task.sleep(nanoseconds: 250_000_000)
@@ -41,8 +41,8 @@ final class FileScannerTests: XCTestCase {
             },
             performInitialRefresh: false
         )
-        viewModel.olderSnapshot = testSnapshot(identifier: "older", timestamp: 100)
-        viewModel.newerSnapshot = testSnapshot(identifier: "newer", timestamp: 200)
+        viewModel.selectSnapshot(testSnapshot(identifier: "older", timestamp: 100), as: .older)
+        viewModel.selectSnapshot(testSnapshot(identifier: "newer", timestamp: 200), as: .newer)
         viewModel.compareSnapshots()
 
         await fulfillment(of: [operationStarted], timeout: 1)
@@ -52,6 +52,63 @@ final class FileScannerTests: XCTestCase {
         XCTAssertNil(viewModel.comparison)
         XCTAssertFalse(viewModel.isComparing)
         XCTAssertNil(viewModel.progress)
+    }
+
+    @MainActor
+    func testReplacingSnapshotClearsOnlyTheReplacedRole() {
+        let viewModel = AppViewModel(performInitialRefresh: false)
+        let older = testSnapshot(identifier: "older", timestamp: 100)
+        let firstNewer = testSnapshot(identifier: "first-newer", timestamp: 200)
+        let secondNewer = testSnapshot(identifier: "second-newer", timestamp: 300)
+
+        viewModel.selectSnapshot(older, as: .older)
+        viewModel.selectSnapshot(firstNewer, as: .newer)
+        viewModel.selectSnapshot(secondNewer, as: .newer)
+
+        XCTAssertEqual(viewModel.olderSnapshot, older)
+        XCTAssertEqual(viewModel.newerSnapshot, secondNewer)
+    }
+
+    @MainActor
+    func testMovingSnapshotToOtherRoleClearsConflictingRole() {
+        let viewModel = AppViewModel(performInitialRefresh: false)
+        let snapshot = testSnapshot(identifier: "snapshot", timestamp: 100)
+
+        viewModel.selectSnapshot(snapshot, as: .newer)
+        viewModel.selectSnapshot(snapshot, as: .older)
+
+        XCTAssertEqual(viewModel.olderSnapshot, snapshot)
+        XCTAssertNil(viewModel.newerSnapshot)
+    }
+
+    @MainActor
+    func testRecheckKeepsPermissionRecoveryForTheDeniedSnapshot() async throws {
+        let volume = URL(fileURLWithPath: "/fixture-volume")
+        let deniedSnapshot = testSnapshot(identifier: "denied", timestamp: 100)
+        let accessibleSnapshot = testSnapshot(identifier: "accessible", timestamp: 200)
+        let viewModel = AppViewModel(
+            comparisonOperation: { _, _, _ in
+                throw AppError.permissionDenied(deniedSnapshot.url)
+            },
+            performInitialRefresh: false,
+            permissionService: TestPermissionService(states: [
+                volume.standardizedFileURL.path: .verified,
+                deniedSnapshot.url.standardizedFileURL.path: .inaccessible("Still blocked")
+            ])
+        )
+
+        viewModel.selectVolume(volume)
+        viewModel.selectSnapshot(deniedSnapshot, as: .older)
+        viewModel.selectSnapshot(accessibleSnapshot, as: .newer)
+        viewModel.compareSnapshots()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        XCTAssertTrue(viewModel.shouldShowPermissionRecovery)
+        viewModel.recheckSelectedVolumeAccess()
+
+        XCTAssertTrue(viewModel.shouldShowPermissionRecovery)
+        XCTAssertEqual(viewModel.olderSnapshot, deniedSnapshot)
+        XCTAssertEqual(viewModel.newerSnapshot, accessibleSnapshot)
     }
 
     func testScannerForwardsIncompleteScanWarnings() async throws {
@@ -155,6 +212,14 @@ private func emptyComparison(older: BackupSnapshot, newer: BackupSnapshot) -> Sn
         ),
         warnings: []
     )
+}
+
+private struct TestPermissionService: PermissionChecking {
+    let states: [String: PermissionState]
+
+    func verifyReadAccess(to url: URL) -> PermissionState {
+        states[url.standardizedFileURL.path] ?? .verified
+    }
 }
 
 private struct WarningFileSystem: FileSystem {

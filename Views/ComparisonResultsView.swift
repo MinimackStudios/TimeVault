@@ -93,26 +93,42 @@ struct ComparisonResultsView: View {
 
 private struct ComparisonWarningsView: View {
     let warnings: [String]
+    @State private var isDismissed = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Label("Comparison may be incomplete", systemImage: "exclamationmark.triangle.fill")
-                .font(.headline)
-                .foregroundStyle(.orange)
+        if !isDismissed {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(alignment: .firstTextBaseline) {
+                    Label("Comparison may be incomplete", systemImage: "exclamationmark.triangle.fill")
+                        .font(.headline)
+                        .foregroundStyle(.orange)
+                    Spacer()
+                    Button("Dismiss warning", systemImage: "xmark") {
+                        isDismissed = true
+                    }
+                    .buttonStyle(.borderless)
+                    .labelStyle(.iconOnly)
+                    .accessibilityLabel("Dismiss comparison warning")
+                }
 
-            ForEach(Array(warnings.enumerated()), id: \.offset) { _, warning in
-                Text(warning)
-                    .font(.callout)
-                    .textSelection(.enabled)
+                ForEach(Array(warnings.enumerated()), id: \.offset) { _, warning in
+                    Text(warning)
+                        .font(.callout)
+                        .textSelection(.enabled)
+                }
+            }
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Comparison warning")
+            .onChange(of: warnings) { _ in
+                isDismissed = false
             }
         }
-        .padding(12)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Comparison warning")
     }
 }
+
 
 private enum ComparisonResultsSection: String, CaseIterable, Identifiable {
     case changes = "All changes"

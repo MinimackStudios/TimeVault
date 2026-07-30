@@ -1,12 +1,16 @@
 import Foundation
 
+protocol PermissionChecking: Sendable {
+    func verifyReadAccess(to url: URL) -> PermissionState
+}
+
 enum PermissionState: Sendable {
     case unknown
     case verified
     case inaccessible(String)
 }
 
-struct PermissionService: Sendable {
+struct PermissionService: PermissionChecking, Sendable {
     static let recoveryInstructions = "The selected location is not readable. Use Choose Volume to approve it, or enable Full Disk Access in System Settings > Privacy & Security if macOS still blocks access."
 
     static var fullDiskAccessSettingsURL: URL? {

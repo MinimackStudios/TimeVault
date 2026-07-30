@@ -3,24 +3,23 @@
     <channel>
         <title>TimeVault</title>
         <item>
-            <title>1.0.0</title>
-            <pubDate>Wed, 29 Jul 2026 14:25:21 -0600</pubDate>
+            <title>1.0.1</title>
+            <pubDate>Thu, 30 Jul 2026 11:56:25 -0600</pubDate>
             <link>https://github.com/MinimackStudios/TimeVault</link>
             <sparkle:fullReleaseNotesLink>https://github.com/MinimackStudios/TimeVault/releases</sparkle:fullReleaseNotesLink>
-            <sparkle:version>1.0.0</sparkle:version>
-            <sparkle:shortVersionString>1.0.0</sparkle:shortVersionString>
+            <sparkle:version>1.0.1</sparkle:version>
+            <sparkle:shortVersionString>1.0.1</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <description sparkle:format="markdown"><![CDATA[# What’s New in TimeVault
+            <description sparkle:format="markdown"><![CDATA[# What’s New in TimeVault 1.0.1
 
-- Initial automatic update support.
-- Native background update checks and installation.
-- A new Check for Updates command and update preferences.
-
-Edit this file before building each public release. Its contents are embedded
-in the signed Sparkle appcast and shown in the native update window.
+- Snapshot selections are now clearly marked, so you can see at a glance which backups are set as the older and newer comparison points.
+- Snapshot selection is more reliable across the browser, pickers, and custom folder choices.
+- Improved visibility of the Use older and Use newer controls on selected snapshot rows.
+- Clearer recovery options when TimeVault needs Full Disk Access to read a backup.
+- Comparison warnings are easier to review and dismiss.
 ]]></description>
-            <enclosure url="https://github.com/MinimackStudios/TimeVault/releases/download/v1.0.0/TimeVault.1.0.0.dmg" length="3950939" type="application/octet-stream" sparkle:edSignature="nMRfVBxhnV5S98fMDg+FrxjfnEpgUER+sZL33xijWAjTNOAzk4XKnA1OO6SC+TilFAUWTWU9Cujs9/070OyZDw=="/>
+            <enclosure url="https://github.com/MinimackStudios/TimeVault/releases/download/v1.0.1/TimeVault.1.0.1.dmg" length="4039583" type="application/octet-stream" sparkle:edSignature="ps7Y0PwPsjBqBCrtLbppTe0t2oc8TxD4Uk7398uD407xeoDSJKunVYJfy4wijP73Vl6lQcCl28Ni6jqe+qlYDg=="/>
         </item>
     </channel>
 </rss>

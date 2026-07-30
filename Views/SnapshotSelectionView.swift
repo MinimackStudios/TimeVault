@@ -5,6 +5,7 @@ struct SnapshotSelectionView: View {
     @State private var localSnapshotsExpanded = false
     @State private var showsAllLocalSnapshots = false
     @State private var snapshotSortOrder: SnapshotSortOrder = .newestFirst
+    @State private var selectedSnapshotURL: URL?
 
     var body: some View {
         ScrollView {
@@ -38,6 +39,7 @@ struct SnapshotSelectionView: View {
                         Label(detail, systemImage: "lock.fill")
                             .foregroundStyle(.orange)
                         HStack(spacing: 12) {
+                            Button("Check Again", action: viewModel.recheckSelectedVolumeAccess)
                             Button("Open Full Disk Access", action: viewModel.openFullDiskAccessSettings)
                             Button("Choose Volume Again", action: viewModel.chooseBackupVolume)
                         }
@@ -136,9 +138,23 @@ struct SnapshotSelectionView: View {
                             .font(.callout)
                             .foregroundStyle(.secondary)
                         HStack(alignment: .top, spacing: 16) {
-                            SnapshotPicker(title: "Older snapshot", snapshot: $viewModel.olderSnapshot, snapshots: sortedBackupSnapshots)
+                            SnapshotPicker(
+                                title: "Older snapshot",
+                                snapshot: Binding(
+                                    get: { viewModel.olderSnapshot },
+                                    set: { viewModel.selectSnapshot($0, as: .older) }
+                                ),
+                                snapshots: sortedBackupSnapshots
+                            )
                                 .disabled(viewModel.isComparing || viewModel.isDiscovering)
-                            SnapshotPicker(title: "Newer snapshot", snapshot: $viewModel.newerSnapshot, snapshots: sortedBackupSnapshots)
+                            SnapshotPicker(
+                                title: "Newer snapshot",
+                                snapshot: Binding(
+                                    get: { viewModel.newerSnapshot },
+                                    set: { viewModel.selectSnapshot($0, as: .newer) }
+                                ),
+                                snapshots: sortedBackupSnapshots
+                            )
                                 .disabled(viewModel.isComparing || viewModel.isDiscovering)
                         }
                     }
@@ -183,23 +199,52 @@ struct SnapshotSelectionView: View {
                             ForEach(sortedBackupSnapshots) { snapshot in
                                 HStack {
                                     Image(systemName: "clock")
+                                    if let selectionDescription = snapshotSelectionDescription(for: snapshot) {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .foregroundStyle(isSelected(snapshot) ? .white : Color.accentColor)
+                                            .accessibilityLabel(selectionDescription)
+                                    }
                                     VStack(alignment: .leading) {
                                         Text(snapshot.date.formatted(date: .abbreviated, time: .shortened))
+                                            .foregroundStyle(isSelected(snapshot) ? .white : .primary)
                                         Text([snapshot.machineName, snapshot.identifier].compactMap { $0 }.joined(separator: " • "))
-                                            .font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                                            .font(.caption)
+                                            .foregroundStyle(isSelected(snapshot) ? .white.opacity(0.8) : .secondary)
+                                            .lineLimit(1)
                                     }
                                     Spacer()
-                                    Button("Open in Finder", systemImage: "folder") {
-                                        viewModel.revealSnapshotInFinder(snapshot)
-                                    }
-                                    .labelStyle(.iconOnly)
-                                    .help("Open this backup snapshot in Finder")
-                                    Button("Use older") { viewModel.olderSnapshot = snapshot }
-                                        .disabled(viewModel.isComparing || viewModel.isDiscovering)
-                                    Button("Use newer") { viewModel.newerSnapshot = snapshot }
-                                        .disabled(viewModel.isComparing || viewModel.isDiscovering)
+Button {
+    selectedSnapshotURL = snapshot.url.standardizedFileURL
+    viewModel.selectSnapshot(snapshot, as: .older)
+} label: {
+    Text("Use older")
+        .font(.callout.weight(.medium))
+        .foregroundStyle(.blue)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 5)
+        .background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 5))
+}
+.buttonStyle(.plain)
+.disabled(viewModel.isComparing || viewModel.isDiscovering)
+Button {
+    selectedSnapshotURL = snapshot.url.standardizedFileURL
+    viewModel.selectSnapshot(snapshot, as: .newer)
+} label: {
+    Text("Use newer")
+        .font(.callout.weight(.medium))
+        .foregroundStyle(.blue)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 5)
+        .background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 5))
+}
+.buttonStyle(.plain)
+.disabled(viewModel.isComparing || viewModel.isDiscovering)
                                 }
                                 .padding(.vertical, 8)
+                                .padding(.horizontal, 6)
+                                .contentShape(Rectangle())
+                                .onTapGesture { selectedSnapshotURL = snapshot.url.standardizedFileURL }
+                                .background(isSelected(snapshot) ? Color.accentColor : Color.clear, in: RoundedRectangle(cornerRadius: 7))
                                 if snapshot.id != sortedBackupSnapshots.last?.id {
                                     Divider()
                                 }
@@ -252,6 +297,31 @@ struct SnapshotSelectionView: View {
 
     private var displayedLocalSnapshots: ArraySlice<LocalSnapshot> {
         showsAllLocalSnapshots ? sortedLocalSnapshots[...] : sortedLocalSnapshots.prefix(5)
+    }
+
+    private func snapshotSelectionDescription(for snapshot: BackupSnapshot) -> String? {
+        let isOlder = matches(snapshot, viewModel.olderSnapshot)
+        let isNewer = matches(snapshot, viewModel.newerSnapshot)
+
+        switch (isOlder, isNewer) {
+        case (true, true):
+            return "Selected as both older and newer snapshot"
+        case (true, false):
+            return "Selected as older snapshot"
+        case (false, true):
+            return "Selected as newer snapshot"
+        case (false, false):
+            return nil
+        }
+    }
+
+    private func matches(_ snapshot: BackupSnapshot, _ selection: BackupSnapshot?) -> Bool {
+        guard let selection else { return false }
+        return snapshot.id == selection.id || snapshot.url.standardizedFileURL == selection.url.standardizedFileURL
+    }
+
+    private func isSelected(_ snapshot: BackupSnapshot) -> Bool {
+        selectedSnapshotURL == snapshot.url.standardizedFileURL
     }
 }
 

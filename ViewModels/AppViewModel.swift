@@ -11,6 +11,11 @@ enum AppSection: Hashable {
 
 @MainActor
 final class AppViewModel: ObservableObject {
+    enum SnapshotRole {
+        case older
+        case newer
+    }
+
     typealias ComparisonOperation = @Sendable (
         BackupSnapshot,
         BackupSnapshot,
@@ -21,8 +26,8 @@ final class AppViewModel: ObservableObject {
     @Published var mountedVolumes: [URL] = []
     @Published var selectedVolume: URL?
     @Published var snapshots: [BackupSnapshot] = []
-    @Published var olderSnapshot: BackupSnapshot?
-    @Published var newerSnapshot: BackupSnapshot?
+    @Published private(set) var olderSnapshot: BackupSnapshot?
+    @Published private(set) var newerSnapshot: BackupSnapshot?
     @Published var comparison: SnapshotComparison? { didSet { invalidateFilteredChangesCache() } }
     @Published var selectedChangeID: UUID?
     @Published var searchText = "" { didSet { invalidateFilteredChangesCache() } }
@@ -40,7 +45,7 @@ final class AppViewModel: ObservableObject {
     @Published var isRefreshingSystemOverview = false
 
     private let discovery = TimeMachineSnapshotDiscovery()
-    private let permissions = PermissionService()
+    private let permissions: any PermissionChecking
     private let bookmarks = SecurityScopedBookmarkStore()
     private let exportService = ExportService()
     private let systemStatus = SystemStatusService()
@@ -49,6 +54,7 @@ final class AppViewModel: ObservableObject {
     private var comparisonTask: Task<Void, Never>?
     private var activeComparisonID: UUID?
     private var activeSecurityScopedURL: URL?
+    private var permissionRecoveryURL: URL?
     private var filteredChangesCache: [FileChange] = []
     private var filteredChangesCacheIsValid = false
 
@@ -60,9 +66,11 @@ final class AppViewModel: ObservableObject {
                 progress: progress
             )
         },
-        performInitialRefresh: Bool = true
+        performInitialRefresh: Bool = true,
+        permissionService: any PermissionChecking = PermissionService()
     ) {
         self.comparisonOperation = comparisonOperation
+        self.permissions = permissionService
         if performInitialRefresh {
             mountedVolumes = bookmarks.restore()
             refreshMountedVolumes()
@@ -109,6 +117,11 @@ final class AppViewModel: ObservableObject {
 
     private func invalidateFilteredChangesCache() {
         filteredChangesCacheIsValid = false
+    }
+
+    private func snapshotsMatch(_ left: BackupSnapshot?, _ right: BackupSnapshot?) -> Bool {
+        guard let left, let right else { return false }
+        return left.id == right.id || left.url.standardizedFileURL == right.url.standardizedFileURL
     }
 
     func refreshMountedVolumes() {
@@ -172,6 +185,16 @@ final class AppViewModel: ObservableObject {
         NSWorkspace.shared.open(url)
     }
 
+    func recheckSelectedVolumeAccess() {
+        guard let accessTarget = permissionRecoveryURL ?? selectedVolume else { return }
+        permissionState = permissions.verifyReadAccess(to: accessTarget)
+        errorMessage = nil
+        diagnostics = nil
+        guard case .verified = permissionState else { return }
+        permissionRecoveryURL = nil
+        discoverSnapshots()
+    }
+
     func chooseFolderSnapshot(isOlder: Bool) {
         let panel = NSOpenPanel()
         panel.title = isOlder ? "Choose Older Snapshot Folder" : "Choose Newer Snapshot Folder"
@@ -192,8 +215,23 @@ final class AppViewModel: ObservableObject {
         if !snapshots.contains(where: { $0.url.standardizedFileURL == normalizedURL }) {
             snapshots.append(snapshot)
         }
-        if isOlder { olderSnapshot = snapshot } else { newerSnapshot = snapshot }
+        selectSnapshot(snapshot, as: isOlder ? .older : .newer)
         section = .snapshots(selectedVolume)
+    }
+
+    func selectSnapshot(_ snapshot: BackupSnapshot?, as role: SnapshotRole) {
+        switch role {
+        case .older:
+            olderSnapshot = snapshot
+            if snapshotsMatch(snapshot, newerSnapshot) {
+                newerSnapshot = nil
+            }
+        case .newer:
+            newerSnapshot = snapshot
+            if snapshotsMatch(snapshot, olderSnapshot) {
+                olderSnapshot = nil
+            }
+        }
     }
 
     func discoverSnapshots() {
@@ -207,7 +245,7 @@ final class AppViewModel: ObservableObject {
                 let validation = self.discovery.validate(volume: selectedVolume)
                 guard validation.isCandidate else { throw AppError.notTimeMachineVolume(validation.detail) }
                 let found = try await self.discovery.discover(on: selectedVolume)
-                self.snapshots = found
+                self.reconcileSnapshots(with: found)
             } catch {
                 self.present(error)
             }
@@ -228,6 +266,10 @@ final class AppViewModel: ObservableObject {
         newerSnapshot = nil
         comparison = nil
         permissionState = permissions.verifyReadAccess(to: url)
+        permissionRecoveryURL = {
+            if case .inaccessible = permissionState { return url }
+            return nil
+        }()
     }
 
     func compareSnapshots() {
@@ -327,10 +369,6 @@ final class AppViewModel: ObservableObject {
         NSWorkspace.shared.activateFileViewerSelecting([base.appendingPathComponent(impact.relativePath)])
     }
 
-    func revealSnapshotInFinder(_ snapshot: BackupSnapshot) {
-        NSWorkspace.shared.activateFileViewerSelecting([snapshot.url])
-    }
-
     private func export(extension fileExtension: String, action: (SnapshotComparison, URL) throws -> Void) {
         guard let comparison else { return }
         let panel = NSSavePanel()
@@ -341,12 +379,37 @@ final class AppViewModel: ObservableObject {
     }
 
     private func present(_ error: Error) {
+        logger.error("Workflow error: \(String(describing: error), privacy: .private)")
+        if case AppError.permissionDenied(let url) = error {
+            permissionRecoveryURL = url
+            permissionState = .inaccessible(PermissionService.recoveryInstructions)
+            errorMessage = nil
+            diagnostics = nil
+            return
+        }
         errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         diagnostics = String(describing: error)
-        if case AppError.permissionDenied(let url) = error {
-            permissionState = permissions.verifyReadAccess(to: url)
+    }
+
+    private func reconcileSnapshots(with discoveredSnapshots: [BackupSnapshot]) {
+        var reconciledSnapshots = discoveredSnapshots
+
+        func resolve(_ selection: BackupSnapshot?) -> BackupSnapshot? {
+            guard let selection else { return nil }
+            if let refreshedSnapshot = reconciledSnapshots.first(where: { snapshotsMatch($0, selection) }) {
+                return refreshedSnapshot
+            }
+            if !reconciledSnapshots.contains(where: { snapshotsMatch($0, selection) }) {
+                reconciledSnapshots.append(selection)
+            }
+            return selection
         }
-        logger.error("Workflow error: \(String(describing: error), privacy: .private)")
+
+        let reconciledOlderSnapshot = resolve(olderSnapshot)
+        let reconciledNewerSnapshot = resolve(newerSnapshot)
+        snapshots = reconciledSnapshots
+        olderSnapshot = reconciledOlderSnapshot
+        newerSnapshot = reconciledNewerSnapshot
     }
 }
 

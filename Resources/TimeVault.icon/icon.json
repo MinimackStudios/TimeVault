@@ -20,26 +20,16 @@
       "hidden" : false,
       "layers" : [
         {
-          "fill" : {
-            "solid" : "srgb:1.00000,1.00000,1.00000,1.00000"
-          },
-          "image-name" : "Line 2.png",
-          "name" : "Line 2"
-        },
-        {
-          "fill" : {
-            "solid" : "srgb:1.00000,1.00000,1.00000,1.00000"
-          },
-          "image-name" : "Line 3.png",
-          "name" : "Line 3"
+          "image-name" : "Group.svg",
+          "name" : "Group"
         }
       ],
-      "name" : "Cross",
+      "name" : "Utility",
       "position" : {
-        "scale" : 1.24,
+        "scale" : 1.27,
         "translation-in-points" : [
-          -54,
-          -54
+          0,
+          0
         ]
       },
       "shadow" : {
@@ -52,70 +42,7 @@
       }
     },
     {
-      "blur-material" : 0.38,
-      "hidden" : false,
-      "layers" : [
-        {
-          "fill-specializations" : [
-            {
-              "appearance" : "dark",
-              "value" : "none"
-            }
-          ],
-          "glass" : true,
-          "hidden" : false,
-          "image-name" : "Ellipse 3.svg",
-          "name" : "Ellipse 3",
-          "position" : {
-            "scale" : 1.23,
-            "translation-in-points" : [
-              -53.2072742508733,
-              -54.573950221339445
-            ]
-          }
-        }
-      ],
-      "name" : "Circle",
-      "shadow" : {
-        "kind" : "neutral",
-        "opacity" : 0.5
-      },
-      "specular" : true,
-      "translucency" : {
-        "enabled" : true,
-        "value" : 0.52
-      }
-    },
-    {
-      "hidden" : false,
-      "layers" : [
-        {
-          "fill" : {
-            "solid" : "srgb:1.00000,1.00000,1.00000,1.00000"
-          },
-          "glass" : true,
-          "image-name" : "Line 1.png",
-          "name" : "Line 1",
-          "position" : {
-            "scale" : 1.33,
-            "translation-in-points" : [
-              165.80836309337496,
-              164.33200199395196
-            ]
-          }
-        }
-      ],
-      "name" : "Handle",
-      "shadow" : {
-        "kind" : "neutral",
-        "opacity" : 0.5
-      },
-      "translucency" : {
-        "enabled" : true,
-        "value" : 0.76
-      }
-    },
-    {
+      "blur-material" : null,
       "hidden" : false,
       "layers" : [
         {
@@ -123,7 +50,7 @@
             {
               "value" : {
                 "linear-gradient" : [
-                  "display-p3:0.51027,0.82006,0.78516,1.00000",
+                  "display-p3:0.49024,0.79981,0.76138,1.00000",
                   "display-p3:0.43840,0.68639,0.65981,1.00000"
                 ],
                 "orientation" : {

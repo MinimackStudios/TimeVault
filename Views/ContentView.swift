@@ -21,6 +21,7 @@ struct ContentView: View {
                         message: message,
                         diagnostics: viewModel.diagnostics,
                         showsPermissionRecovery: viewModel.shouldShowPermissionRecovery,
+                        checkPermission: viewModel.recheckSelectedVolumeAccess,
                         openFullDiskAccessSettings: viewModel.openFullDiskAccessSettings,
                         chooseBackupVolume: viewModel.chooseBackupVolume
                     ) { viewModel.errorMessage = nil }
@@ -39,7 +40,10 @@ struct SidebarView: View {
     var body: some View {
         List(selection: Binding(
             get: { viewModel.section },
-            set: { viewModel.navigate(to: $0) }
+            set: { destination in
+                guard destination != viewModel.section else { return }
+                DispatchQueue.main.async { viewModel.navigate(to: destination) }
+            }
         )) {
             Label("Dashboard", systemImage: "rectangle.3.group")
                 .font(.body.weight(.medium))
@@ -102,6 +106,7 @@ struct ErrorBanner: View {
     let message: String
     let diagnostics: String?
     let showsPermissionRecovery: Bool
+    let checkPermission: () -> Void
     let openFullDiskAccessSettings: () -> Void
     let chooseBackupVolume: () -> Void
     let dismiss: () -> Void
@@ -117,6 +122,7 @@ struct ErrorBanner: View {
             }
             if showsPermissionRecovery {
                 HStack(spacing: 12) {
+                    Button("Check Again", action: checkPermission)
                     Button("Open Full Disk Access", action: openFullDiskAccessSettings)
                     Button("Choose Volume Again", action: chooseBackupVolume)
                 }

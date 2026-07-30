@@ -32,7 +32,7 @@
 		A023 /* ComparisonEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B023 /* ComparisonEngineTests.swift */; };
 		A024 /* FileScannerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B024 /* FileScannerTests.swift */; };
 		A025 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B025 /* AboutView.swift */; };
-		A028 /* Time Machine Analyzer.icon in Resources */ = {isa = PBXBuildFile; fileRef = E73797CF3010107600408BFA /* Time Machine Analyzer.icon */; };
+		A028 /* TimeVault.icon in Resources */ = {isa = PBXBuildFile; fileRef = E73797CF3010107600408BFA /* TimeVault.icon */; };
 		A029 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B026 /* Assets.xcassets */; };
 		A030 /* SystemSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = B027 /* SystemSnapshot.swift */; };
 		A031 /* SystemStatusService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B028 /* SystemStatusService.swift */; };
@@ -87,7 +87,7 @@
 		B032 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C001 /* TimeVault.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TimeVault.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C002 /* TimeVaultTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TimeVaultTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		E73797CF3010107600408BFA /* Time Machine Analyzer.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = "Time Machine Analyzer.icon"; sourceTree = "<group>"; };
+		E73797CF3010107600408BFA /* TimeVault.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = TimeVault.icon; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -120,7 +120,7 @@
 				E013 /* Views */,
 				E014 /* Tests */,
 				E015 /* Products */,
-				E73797CF3010107600408BFA /* Time Machine Analyzer.icon */,
+				E018 /* Resources */,
 				B026 /* Assets.xcassets */,
 			);
 			sourceTree = "<group>";
@@ -178,14 +178,6 @@
 			path = SnapshotDiscovery;
 			sourceTree = "<group>";
 		};
-		E016 /* SystemStatus */ = {
-			isa = PBXGroup;
-			children = (
-				B028 /* SystemStatusService.swift */,
-			);
-			path = SystemStatus;
-			sourceTree = "<group>";
-		};
 		E009 /* Models */ = {
 			isa = PBXGroup;
 			children = (
@@ -211,14 +203,6 @@
 				E017 /* Updates */,
 			);
 			path = Services;
-			sourceTree = "<group>";
-		};
-		E017 /* Updates */ = {
-			isa = PBXGroup;
-			children = (
-				B031 /* UpdateController.swift */,
-			);
-			path = Updates;
 			sourceTree = "<group>";
 		};
 		E011 /* Utilities */ = {
@@ -268,6 +252,30 @@
 				C002 /* TimeVaultTests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		E016 /* SystemStatus */ = {
+			isa = PBXGroup;
+			children = (
+				B028 /* SystemStatusService.swift */,
+			);
+			path = SystemStatus;
+			sourceTree = "<group>";
+		};
+		E017 /* Updates */ = {
+			isa = PBXGroup;
+			children = (
+				B031 /* UpdateController.swift */,
+			);
+			path = Updates;
+			sourceTree = "<group>";
+		};
+		E018 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				E73797CF3010107600408BFA /* TimeVault.icon */,
+			);
+			path = Resources;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -353,7 +361,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A028 /* Time Machine Analyzer.icon in Resources */,
+				A028 /* TimeVault.icon in Resources */,
 				A029 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -419,15 +427,18 @@
 		K001 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = "Time Machine Analyzer";
+				ASSETCATALOG_COMPILER_APPICON_NAME = TimeVault;
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
-				CURRENT_PROJECT_VERSION = 1.0.0;
+				CURRENT_PROJECT_VERSION = 1.0.1;
 				ENABLE_TESTABILITY = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = App/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.minimackstudios.TimeVault;
 				PRODUCT_MODULE_NAME = TimeVault;
 				PRODUCT_NAME = TimeVault;
@@ -439,14 +450,17 @@
 		K002 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = "Time Machine Analyzer";
+				ASSETCATALOG_COMPILER_APPICON_NAME = TimeVault;
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
-				CURRENT_PROJECT_VERSION = 1.0.0;
+				CURRENT_PROJECT_VERSION = 1.0.1;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = App/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.minimackstudios.TimeVault;
 				PRODUCT_MODULE_NAME = TimeVault;
 				PRODUCT_NAME = TimeVault;
