@@ -15,7 +15,11 @@ final class UpdateController: ObservableObject {
             userDriverDelegate: nil
         )
         updaterController = controller
+        controller.updater.automaticallyChecksForUpdates = true
+        controller.updater.automaticallyDownloadsUpdates = false
         canCheckForUpdates = controller.updater.canCheckForUpdates
+
+        controller.updater.checkForUpdatesInBackground()
 
         controller.updater
             .publisher(for: \.canCheckForUpdates)
@@ -26,26 +30,7 @@ final class UpdateController: ObservableObject {
             .store(in: &cancellables)
     }
 
-    var automaticallyChecksForUpdates: Bool {
-        updaterController.updater.automaticallyChecksForUpdates
-    }
-
-    var automaticallyDownloadsUpdates: Bool {
-        updaterController.updater.automaticallyDownloadsUpdates
-    }
-
     func checkForUpdates() {
         updaterController.checkForUpdates(nil)
-    }
-
-    func setAutomaticallyChecksForUpdates(_ enabled: Bool) {
-        updaterController.updater.automaticallyChecksForUpdates = enabled
-        if !enabled {
-            updaterController.updater.automaticallyDownloadsUpdates = false
-        }
-    }
-
-    func setAutomaticallyDownloadsUpdates(_ enabled: Bool) {
-        updaterController.updater.automaticallyDownloadsUpdates = enabled
     }
 }

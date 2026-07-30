@@ -63,18 +63,6 @@ private struct GeneralSettingsPane: View {
 
 private struct UpdaterSettingsSection: View {
     @ObservedObject var updateController: UpdateController
-    @State private var automaticallyChecksForUpdates: Bool
-    @State private var automaticallyDownloadsUpdates: Bool
-
-    init(updateController: UpdateController) {
-        self.updateController = updateController
-        _automaticallyChecksForUpdates = State(
-            initialValue: updateController.automaticallyChecksForUpdates
-        )
-        _automaticallyDownloadsUpdates = State(
-            initialValue: updateController.automaticallyDownloadsUpdates
-        )
-    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -86,7 +74,7 @@ private struct UpdaterSettingsSection: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Software Updates")
                         .font(.body.weight(.medium))
-                    Text("TimeVault can check for signed updates and install them when you are ready.")
+                    Text("TimeVault checks for signed updates when it starts and shows the update window when one is available.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -98,26 +86,6 @@ private struct UpdaterSettingsSection: View {
                 }
                 .buttonStyle(.bordered)
                 .disabled(!updateController.canCheckForUpdates)
-            }
-
-            Toggle(
-                "Automatically check for updates",
-                isOn: $automaticallyChecksForUpdates
-            )
-            .onChange(of: automaticallyChecksForUpdates) { newValue in
-                updateController.setAutomaticallyChecksForUpdates(newValue)
-                if !newValue {
-                    automaticallyDownloadsUpdates = false
-                }
-            }
-
-            Toggle(
-                "Download and install updates automatically",
-                isOn: $automaticallyDownloadsUpdates
-            )
-            .disabled(!automaticallyChecksForUpdates)
-            .onChange(of: automaticallyDownloadsUpdates) { newValue in
-                updateController.setAutomaticallyDownloadsUpdates(newValue)
             }
         }
     }

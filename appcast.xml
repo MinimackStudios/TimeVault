@@ -4,10 +4,10 @@
         <title>TimeVault</title>
         <item>
             <title>1.0.1</title>
-            <pubDate>Thu, 30 Jul 2026 11:56:25 -0600</pubDate>
+            <pubDate>Thu, 30 Jul 2026 13:00:24 -0600</pubDate>
             <link>https://github.com/MinimackStudios/TimeVault</link>
             <sparkle:fullReleaseNotesLink>https://github.com/MinimackStudios/TimeVault/releases</sparkle:fullReleaseNotesLink>
-            <sparkle:version>1.0.1</sparkle:version>
+            <sparkle:version>1.0.1.2</sparkle:version>
             <sparkle:shortVersionString>1.0.1</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
@@ -19,7 +19,7 @@
 - Clearer recovery options when TimeVault needs Full Disk Access to read a backup.
 - Comparison warnings are easier to review and dismiss.
 ]]></description>
-            <enclosure url="https://github.com/MinimackStudios/TimeVault/releases/download/v1.0.1/TimeVault.1.0.1.dmg" length="4039583" type="application/octet-stream" sparkle:edSignature="ps7Y0PwPsjBqBCrtLbppTe0t2oc8TxD4Uk7398uD407xeoDSJKunVYJfy4wijP73Vl6lQcCl28Ni6jqe+qlYDg=="/>
+            <enclosure url="https://github.com/MinimackStudios/TimeVault/releases/download/v1.0.1/TimeVault.1.0.1.dmg" length="4032047" type="application/octet-stream" sparkle:edSignature="YflXqNhDHkOhkFCcr12VJJAfpkTWIUkHD5HIwsqxUxxWcfLvb2IuXfk21amxNoS4rCnFZimAjDb2CyGSrbjECg=="/>
         </item>
     </channel>
 </rss>
