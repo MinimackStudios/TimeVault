@@ -16,7 +16,7 @@ struct FileScanLimits: Sendable, Equatable {
     let maxDuration: TimeInterval
 
     static let `default` = FileScanLimits(
-        maxItems: 250_000,
+        maxItems: 2_000_000,
         maxDepth: 128,
         maxBytes: 1_099_511_627_776,
         maxDuration: 600
