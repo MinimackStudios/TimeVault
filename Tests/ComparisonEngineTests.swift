@@ -55,6 +55,51 @@ final class ComparisonEngineTests: XCTestCase {
         XCTAssertNil(records.first(where: { $0.relativePath == "link.txt/target.txt" }))
     }
 
+    func testSnapshotScanStopsAtConfiguredResourceLimits() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        try Data(repeating: 0, count: 4).write(to: root.appendingPathComponent("file.bin"))
+
+        let limits = FileScanLimits(maxItems: 0, maxDepth: 128, maxBytes: UInt64.max, maxDuration: 600)
+        XCTAssertThrowsError(try LocalFileSystem(limits: limits).scan(root: root, progress: { _ in })) { error in
+            guard case AppError.resourceLimitExceeded(let failedRoot, let detail) = error else {
+                return XCTFail("Expected a resource limit error, got \(error)")
+            }
+            XCTAssertEqual(failedRoot, root)
+            XCTAssertTrue(detail.contains("item"))
+        }
+    }
+
+    func testSnapshotScanStopsAtConfiguredByteLimit() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        try Data(repeating: 0, count: 4).write(to: root.appendingPathComponent("file.bin"))
+
+        let limits = FileScanLimits(maxItems: 2, maxDepth: 1, maxBytes: 3, maxDuration: 600)
+        XCTAssertThrowsError(try LocalFileSystem(limits: limits).scan(root: root, progress: { _ in })) { error in
+            guard case AppError.resourceLimitExceeded(let failedRoot, let detail) = error else {
+                return XCTFail("Expected a resource limit error, got \(error)")
+            }
+            XCTAssertEqual(failedRoot, root)
+            XCTAssertTrue(detail.contains("byte"))
+        }
+    }
+
+    func testSnapshotScanAcceptsEntriesWithinConfiguredLimits() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        try Data(repeating: 0, count: 4).write(to: root.appendingPathComponent("file.bin"))
+
+        let limits = FileScanLimits(maxItems: 2, maxDepth: 1, maxBytes: 4, maxDuration: 600)
+        let result = try LocalFileSystem(limits: limits).scan(root: root, progress: { _ in })
+
+        XCTAssertEqual(result.records.map(\.relativePath), ["file.bin"])
+        XCTAssertTrue(result.warnings.isEmpty)
+    }
+
     func testHardLinkedFilesAreNotDoubleCountedInLogicalByteSummary() async throws {
         let old: [FileMetadata] = []
         let new = [
@@ -147,6 +192,50 @@ final class ComparisonEngineTests: XCTestCase {
         formatter.dateFormat = "yyyy-MM-dd-HHmmss"
         XCTAssertNotNil(formatter.date(from: normalized))
         XCTAssertEqual(normalized, "2026-07-21-121537")
+    }
+
+    func testCSVNeutralizesFormulaLeadingValuesAndPreservesOrdinaryValues() throws {
+        let riskyPaths = ["=SUM(1,1)", "+SUM(1,1)", "-1+1", "@SUM(1,1)"]
+        let changes = (riskyPaths + ["ordinary.txt"]).map { path in
+            FileChange(
+                id: UUID(),
+                relativePath: path,
+                kind: .added,
+                oldMetadata: nil,
+                newMetadata: metadata(path, size: 1),
+                oldLogicalSize: nil,
+                newLogicalSize: nil
+            )
+        }
+        let snapshot = BackupSnapshot(date: Date(), backupVolume: "Fixture", url: URL(fileURLWithPath: "/fixture"))
+        let comparison = SnapshotComparison(
+            olderSnapshot: snapshot,
+            newerSnapshot: snapshot,
+            changes: changes,
+            folderImpacts: [],
+            summary: ComparisonSummary(
+                addedCount: changes.count,
+                removedCount: 0,
+                modifiedCount: 0,
+                folderChangeCount: 0,
+                logicalBytesAdded: UInt64(changes.count),
+                logicalBytesRemoved: 0,
+                logicalBytesModified: 0,
+                duration: 0
+            ),
+            warnings: []
+        )
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).appendingPathExtension("csv")
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        try ExportService().writeCSV(comparison, to: url)
+        let csv = try String(contentsOf: url, encoding: .utf8)
+
+        for path in riskyPaths {
+            XCTAssertTrue(csv.contains("\"'\(path)\""), "Expected formula-leading value to be neutralized: \(path)")
+        }
+        XCTAssertTrue(csv.contains("\"ordinary.txt\""))
+        XCTAssertFalse(csv.contains("\"=SUM(1,1)\""))
     }
 
     private func metadata(_ path: String, size: UInt64 = 0, date: Date? = nil, type: FileItemType = .file, permissions: UInt16? = nil, fileIdentifier: UInt64? = nil) -> FileMetadata {

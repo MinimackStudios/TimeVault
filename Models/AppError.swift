@@ -7,6 +7,7 @@ enum AppError: LocalizedError, Sendable {
     case snapshotUnavailable(URL)
     case driveDisconnected(URL)
     case metadataReadFailed(URL, String)
+    case resourceLimitExceeded(URL, String)
     case tmutilFailed(String)
     case comparisonCancelled
     case invalidCache(String)
@@ -19,6 +20,7 @@ enum AppError: LocalizedError, Sendable {
         case .snapshotUnavailable: return "A selected snapshot is no longer available. The backup may have been disconnected or changed."
         case .driveDisconnected: return "The backup drive appears to have been disconnected."
         case .metadataReadFailed(_, let detail): return "Some file metadata could not be read. \(detail)"
+        case .resourceLimitExceeded(_, let detail): return "The snapshot is too large to compare safely. \(detail)"
         case .tmutilFailed(let detail):
             return detail.isEmpty ? "Time Machine could not complete the requested operation." : "Time Machine could not complete the requested operation. \(detail)"
         case .comparisonCancelled: return "The comparison was cancelled."

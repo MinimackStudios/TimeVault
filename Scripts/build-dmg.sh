@@ -58,7 +58,7 @@ VERSION=$(
         -c "Print :CFBundleShortVersionString" \
         "$APP_PATH/Contents/Info.plist"
 )
-DMG_NAME="TimeVault $VERSION.dmg"
+DMG_NAME="TimeVault.dmg"
 BASE_DMG="$BASE_DIR/$DMG_NAME"
 OUTPUT_DMG="$OUTPUT_DIR/$DMG_NAME"
 
@@ -80,6 +80,14 @@ OUTPUT_DMG="$OUTPUT_DIR/$DMG_NAME"
     --dmg-title=TimeVault \
     "$APP_PATH" \
     "$BASE_DIR"
+
+CREATE_DMG_OUTPUT="$BASE_DIR/TimeVault $VERSION.dmg"
+if [[ ! -f "$CREATE_DMG_OUTPUT" ]]; then
+    print -u2 "create-dmg did not produce the expected intermediate image:"
+    print -u2 "$CREATE_DMG_OUTPUT"
+    exit 1
+fi
+mv "$CREATE_DMG_OUTPUT" "$BASE_DMG"
 
 hdiutil convert "$BASE_DMG" \
     -format UDRW \

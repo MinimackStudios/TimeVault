@@ -3,23 +3,15 @@
     <channel>
         <title>TimeVault</title>
         <item>
-            <title>1.0.1</title>
-            <pubDate>Thu, 30 Jul 2026 13:00:24 -0600</pubDate>
+            <title>1.0.2</title>
+            <pubDate>Fri, 31 Jul 2026 14:30:05 -0600</pubDate>
             <link>https://github.com/MinimackStudios/TimeVault</link>
             <sparkle:fullReleaseNotesLink>https://github.com/MinimackStudios/TimeVault/releases</sparkle:fullReleaseNotesLink>
-            <sparkle:version>1.0.1.2</sparkle:version>
-            <sparkle:shortVersionString>1.0.1</sparkle:shortVersionString>
+            <sparkle:version>1.0.2.1</sparkle:version>
+            <sparkle:shortVersionString>1.0.2</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <description sparkle:format="markdown"><![CDATA[# What’s New in TimeVault 1.0.1
-
-- Snapshot selections are now clearly marked, so you can see at a glance which backups are set as the older and newer comparison points.
-- Snapshot selection is more reliable across the browser, pickers, and custom folder choices.
-- Improved visibility of the Use older and Use newer controls on selected snapshot rows.
-- Clearer recovery options when TimeVault needs Full Disk Access to read a backup.
-- Comparison warnings are easier to review and dismiss.
-]]></description>
-            <enclosure url="https://github.com/MinimackStudios/TimeVault/releases/download/v1.0.1/TimeVault.1.0.1.dmg" length="4032047" type="application/octet-stream" sparkle:edSignature="YflXqNhDHkOhkFCcr12VJJAfpkTWIUkHD5HIwsqxUxxWcfLvb2IuXfk21amxNoS4rCnFZimAjDb2CyGSrbjECg=="/>
+            <enclosure url="https://github.com/MinimackStudios/TimeVault/releases/download/v1.0.2/TimeVault.dmg" length="4037403" type="application/octet-stream" sparkle:edSignature="EUjDnVPfrKtysSRIw5DteXIV0usmD2c7d3TZYHKjFGlrtvryuZQC/vZRB5IPBTyY6vhEVS935HYe2mY13QXwAg=="/>
         </item>
     </channel>
 </rss>

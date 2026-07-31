@@ -18,7 +18,7 @@ the signed update metadata automatically.
 The script builds and ad hoc signs the app, creates and verifies the customized
 DMG, signs the DMG for Sparkle, and writes:
 
-- `dist/TimeVault <version>.dmg`
+- `dist/TimeVault.dmg`
 - `dist/appcast.xml`
 - `appcast.xml`
 
@@ -27,7 +27,7 @@ DMG, signs the DMG for Sparkle, and writes:
 1. Commit and push the updated source, version, release notes, and root
    `appcast.xml` to `main`.
 2. Create a GitHub release tagged `v<version>`.
-3. Upload `dist/TimeVault <version>.dmg` as a release asset.
+3. Upload `dist/TimeVault.dmg` as a release asset.
 4. Confirm the release asset URL matches the enclosure URL in `appcast.xml`.
 5. Open the raw `appcast.xml` URL in a browser and confirm it is publicly
    accessible.

@@ -21,7 +21,18 @@ struct ExportService: Sendable {
     }
 
     private static func escape(_ value: String) -> String {
-        "\"" + value.replacingOccurrences(of: "\"", with: "\"\"") + "\""
+        let safeValue = neutralizeFormula(value)
+        return "\"" + safeValue.replacingOccurrences(of: "\"", with: "\"\"") + "\""
+    }
+
+    private static func neutralizeFormula(_ value: String) -> String {
+        guard let first = value.first else { return value }
+        switch first {
+        case "=", "+", "-", "@", "\t", "\r", "\n":
+            return "'" + value
+        default:
+            return value
+        }
     }
 }
 

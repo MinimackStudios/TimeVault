@@ -9,7 +9,27 @@ struct FileScanResult: Sendable {
     let warnings: [String]
 }
 
+struct FileScanLimits: Sendable, Equatable {
+    let maxItems: Int
+    let maxDepth: Int
+    let maxBytes: UInt64
+    let maxDuration: TimeInterval
+
+    static let `default` = FileScanLimits(
+        maxItems: 250_000,
+        maxDepth: 128,
+        maxBytes: 1_099_511_627_776,
+        maxDuration: 600
+    )
+}
+
 struct LocalFileSystem: FileSystem {
+    let limits: FileScanLimits
+
+    init(limits: FileScanLimits = .default) {
+        self.limits = limits
+    }
+
     func scan(root: URL, progress: @escaping @Sendable (Int) -> Void) throws -> FileScanResult {
         let fileManager = FileManager.default
         guard fileManager.isReadableFile(atPath: root.path) else {
@@ -36,8 +56,17 @@ struct LocalFileSystem: FileSystem {
 
         var records: [FileMetadata] = []
         var count = 0
+        var totalBytes: UInt64 = 0
+        let scanStartedAt = Date()
         for case let url as URL in enumerator {
             try Task.checkCancellation()
+            try enforceElapsedTime(root: root, startedAt: scanStartedAt)
+            guard count < limits.maxItems else {
+                throw AppError.resourceLimitExceeded(root, "The scan exceeded its \(limits.maxItems)-item limit.")
+            }
+            guard enumerator.level <= limits.maxDepth else {
+                throw AppError.resourceLimitExceeded(root, "The scan exceeded its depth limit of \(limits.maxDepth).")
+            }
             let relativePath = normalizedRelativePath(url: url, root: root)
             guard !relativePath.isEmpty else { continue }
 
@@ -58,10 +87,14 @@ struct LocalFileSystem: FileSystem {
 
                 let destination = isSymlink ? try? fileManager.destinationOfSymbolicLink(atPath: url.path) : nil
                 let identifier = values.fileResourceIdentifier.flatMap(Self.numericIdentifier)
+                let size = UInt64(max(0, values.fileSize ?? 0))
+                guard size <= limits.maxBytes - min(totalBytes, limits.maxBytes) else {
+                    throw AppError.resourceLimitExceeded(root, "The scan exceeded its \(limits.maxBytes)-byte limit.")
+                }
                 records.append(FileMetadata(
                     relativePath: relativePath,
                     itemType: type,
-                    size: UInt64(max(0, values.fileSize ?? 0)),
+                    size: size,
                     modificationDate: values.contentModificationDate,
                     creationDate: values.creationDate,
                     permissions: try? fileManager.attributesOfItem(atPath: url.path)[.posixPermissions] as? UInt16,
@@ -71,13 +104,25 @@ struct LocalFileSystem: FileSystem {
                     checksum: nil
                 ))
                 count += 1
+                totalBytes += size
                 if count % 256 == 0 { progress(count) }
+            } catch let error as AppError {
+                if case .resourceLimitExceeded = error {
+                    throw error
+                }
+                diagnostics.record(url: url, error: error)
             } catch {
                 diagnostics.record(url: url, error: error)
             }
         }
         progress(count)
         return FileScanResult(records: records, warnings: diagnostics.warnings)
+    }
+
+    private func enforceElapsedTime(root: URL, startedAt: Date) throws {
+        guard Date().timeIntervalSince(startedAt) <= limits.maxDuration else {
+            throw AppError.resourceLimitExceeded(root, "The scan exceeded its \(Int(limits.maxDuration))-second time limit.")
+        }
     }
 
     private func normalizedRelativePath(url: URL, root: URL) -> String {
