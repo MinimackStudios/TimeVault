@@ -145,7 +145,7 @@ cp -p "$OUTPUT_DMG" "$APPCAST_DIR/"
 if [[ -f "$DISTRIBUTION_DIR/ReleaseNotes.md" ]]; then
     cp -p \
         "$DISTRIBUTION_DIR/ReleaseNotes.md" \
-        "$APPCAST_DIR/TimeVault $VERSION.md"
+        "$APPCAST_DIR/${DMG_NAME%.dmg}.md"
 fi
 
 "$GENERATE_APPCAST" \
