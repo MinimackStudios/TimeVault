@@ -18,6 +18,10 @@ enum LocalSnapshotDiscoveryStatus: Equatable, Sendable {
         return nil
     }
 
+    var hasSnapshots: Bool {
+        count.map { $0 > 0 } ?? false
+    }
+
     var displayValue: String {
         count?.formatted() ?? "Unavailable"
     }
@@ -53,12 +57,19 @@ enum BackupActivity: Equatable, Sendable {
     case running
     case idle
     case unavailable
+    case disconnected
+
+    func resolvedForDashboard(hasMountedBackupDrive: Bool) -> BackupActivity {
+        guard !hasMountedBackupDrive, self != .running else { return self }
+        return .disconnected
+    }
 
     var title: String {
         switch self {
         case .running: "Backup in progress"
         case .idle: "Backup idle"
         case .unavailable: "Status unavailable"
+        case .disconnected: "No backup drive connected"
         }
     }
 
@@ -67,6 +78,7 @@ enum BackupActivity: Equatable, Sendable {
         case .running: "arrow.triangle.2.circlepath.circle.fill"
         case .idle: "checkmark.circle.fill"
         case .unavailable: "questionmark.circle"
+        case .disconnected: "externaldrive.badge.xmark"
         }
     }
 }

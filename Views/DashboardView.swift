@@ -23,11 +23,14 @@ struct DashboardView: View {
                 }
 
                 if let overview = viewModel.systemOverview {
+                    let dashboardActivity = overview.backupActivity.resolvedForDashboard(
+                        hasMountedBackupDrive: !viewModel.mountedVolumes.isEmpty
+                    )
                     DashboardHero(
-                        activity: overview.backupActivity,
-                        lastBackup: overview.lastBackupPath.map(lastBackupDescription) ?? "Last backup is unavailable",
-                        tint: backupTint(for: overview.backupActivity),
-                        browseSnapshots: { viewModel.showSnapshotBrowser() },
+                        activity: dashboardActivity,
+                        detail: backupDetail(for: dashboardActivity, overview: overview),
+                        tint: backupTint(for: dashboardActivity),
+                        browseSnapshots: dashboardActivity == .disconnected ? nil : { viewModel.showSnapshotBrowser() },
                         addBackupDrive: { viewModel.chooseBackupVolume() }
                     )
 
@@ -92,7 +95,18 @@ struct DashboardView: View {
         case .running: .orange
         case .idle: .green
         case .unavailable: .secondary
+        case .disconnected: .orange
         }
+    }
+
+    private func backupDetail(for activity: BackupActivity, overview: SystemOverview) -> String {
+        if activity == .disconnected {
+            if let path = overview.lastBackupPath, let date = SystemStatusService.snapshotDate(in: path) {
+                return "Drive disconnected. Last backup: \(date.formatted(date: .abbreviated, time: .shortened))"
+            }
+            return "Connect or choose a backup drive to browse backup history"
+        }
+        return overview.lastBackupPath.map(lastBackupDescription) ?? "Last backup is unavailable"
     }
 
     private func lastBackupDescription(_ path: String) -> String {
@@ -110,9 +124,9 @@ struct DashboardView: View {
 
 private struct DashboardHero: View {
     let activity: BackupActivity
-    let lastBackup: String
+    let detail: String
     let tint: Color
-    let browseSnapshots: () -> Void
+    let browseSnapshots: (() -> Void)?
     let addBackupDrive: () -> Void
 
     var body: some View {
@@ -133,7 +147,7 @@ private struct DashboardHero: View {
                     .foregroundStyle(.secondary)
                 Text(activity.title)
                     .font(.title2.bold())
-                Text(lastBackup)
+                Text(detail)
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
@@ -142,10 +156,15 @@ private struct DashboardHero: View {
             Spacer(minLength: 20)
 
             VStack(alignment: .trailing, spacing: 9) {
-                Button("Browse snapshots", systemImage: "clock.arrow.circlepath", action: browseSnapshots)
-                    .buttonStyle(.borderedProminent)
-                Button("Add backup drive", systemImage: "externaldrive.badge.plus", action: addBackupDrive)
-                    .buttonStyle(.bordered)
+                if let browseSnapshots {
+                    Button("Browse snapshots", systemImage: "clock.arrow.circlepath", action: browseSnapshots)
+                        .buttonStyle(.borderedProminent)
+                    Button("Add backup drive", systemImage: "externaldrive.badge.plus", action: addBackupDrive)
+                        .buttonStyle(.bordered)
+                } else {
+                    Button("Add backup drive", systemImage: "externaldrive.badge.plus", action: addBackupDrive)
+                        .buttonStyle(.borderedProminent)
+                }
             }
         }
         .padding(24)
@@ -278,6 +297,8 @@ private struct DashboardSnapshotCard: View {
             Spacer(minLength: 2)
             Button("View local snapshots", systemImage: "arrow.right", action: browseSnapshots)
                 .buttonStyle(.link)
+                .disabled(!status.hasSnapshots)
+                .accessibilityHint(status.hasSnapshots ? "Opens the local snapshot browser" : "No local snapshots are available")
         }
         .frame(maxWidth: .infinity, minHeight: 152, alignment: .topLeading)
         .padding(20)

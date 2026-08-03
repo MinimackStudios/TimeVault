@@ -1,4 +1,6 @@
-# What’s New in TimeVault 1.0.2
+# What’s New in TimeVault 1.0.3
 
-- Snapshot comparisons now stop safely when a scan exceeds configured item, depth, size, or time limits.
-- CSV exports now neutralize formula-leading values to prevent spreadsheet formulas from running when opened.
+- The dashboard now distinguishes an idle backup from having no backup drive connected.
+- When no compatible backup drive is mounted, Add backup drive becomes the primary action and Browse snapshots is hidden.
+- View local snapshots is disabled when no local snapshots are available or discovery cannot confirm any.
+- Local snapshot browsing remains available independently when local snapshots exist, even if the external backup drive is disconnected.

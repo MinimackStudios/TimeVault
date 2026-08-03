@@ -35,6 +35,7 @@ final class SystemStatusServiceTests: XCTestCase {
         ).discoverLocalSnapshots()
 
         XCTAssertEqual(result.status, .loaded(0))
+        XCTAssertFalse(result.status.hasSnapshots)
         XCTAssertTrue(result.snapshots.isEmpty)
     }
 
@@ -48,6 +49,7 @@ final class SystemStatusServiceTests: XCTestCase {
         ).discoverLocalSnapshots()
 
         XCTAssertEqual(result.status, .loaded(2))
+        XCTAssertTrue(result.status.hasSnapshots)
         XCTAssertEqual(result.snapshots.count, 2)
     }
 
@@ -58,6 +60,7 @@ final class SystemStatusServiceTests: XCTestCase {
 
         XCTAssertEqual(result.status, .failed)
         XCTAssertNil(result.status.count)
+        XCTAssertFalse(result.status.hasSnapshots)
         XCTAssertTrue(result.snapshots.isEmpty)
     }
 
@@ -69,6 +72,35 @@ final class SystemStatusServiceTests: XCTestCase {
         XCTAssertEqual(dashboard.overview.localSnapshotStatus, .failed)
         XCTAssertNil(dashboard.overview.localSnapshotStatus.count)
         XCTAssertTrue(dashboard.localSnapshots.isEmpty)
+    }
+
+    func testIdleDashboardReportsDisconnectedWithoutMountedBackupDrive() {
+        let activity = BackupActivity.idle.resolvedForDashboard(hasMountedBackupDrive: false)
+
+        XCTAssertEqual(activity, .disconnected)
+        XCTAssertEqual(activity.title, "No backup drive connected")
+        XCTAssertEqual(activity.systemImage, "externaldrive.badge.xmark")
+    }
+
+    func testUnavailableDashboardReportsDisconnectedWithoutMountedBackupDrive() {
+        XCTAssertEqual(
+            BackupActivity.unavailable.resolvedForDashboard(hasMountedBackupDrive: false),
+            .disconnected
+        )
+    }
+
+    func testRunningBackupRemainsVisibleWithoutDiscoveredMountedDrive() {
+        XCTAssertEqual(
+            BackupActivity.running.resolvedForDashboard(hasMountedBackupDrive: false),
+            .running
+        )
+    }
+
+    func testIdleDashboardRemainsIdleWithMountedBackupDrive() {
+        XCTAssertEqual(
+            BackupActivity.idle.resolvedForDashboard(hasMountedBackupDrive: true),
+            .idle
+        )
     }
 
     func testCommandRunnerDrainsLargeStandardOutput() async throws {

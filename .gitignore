@@ -5,3 +5,5 @@ xcuserdata/
 *.xcuserstate
 /dist/
 node_modules/
+AGENTS.md
+agent_docs/
