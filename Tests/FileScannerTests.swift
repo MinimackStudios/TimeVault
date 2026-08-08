@@ -3,6 +3,27 @@ import XCTest
 @testable import TimeVault
 
 final class FileScannerTests: XCTestCase {
+    func testSecurityScopedBookmarkStoreRestoresApprovedVolume() throws {
+        let suiteName = "TimeVaultTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let store = SecurityScopedBookmarkStore(defaults: defaults)
+        do {
+            try store.save(url: root)
+        } catch {
+            throw XCTSkip("Security-scoped bookmarks are unavailable in this test environment: \(error.localizedDescription)")
+        }
+
+        let restored = store.restoreEntries()
+        XCTAssertEqual(restored.map(\.url), [root.standardizedFileURL])
+        XCTAssertFalse(restored.first?.wasStale ?? true)
+    }
+
     @MainActor
     func testNewerComparisonCannotBeOverwrittenByStaleResult() async throws {
         let viewModel = AppViewModel(

@@ -7,6 +7,33 @@ PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 DISTRIBUTION_DIR="$PROJECT_DIR/Distribution"
 OUTPUT_DIR="${1:-$PROJECT_DIR/dist}"
 
+SIGNING_IDENTITY="${TIMEVAULT_CODESIGN_IDENTITY:-}"
+ALLOW_ADHOC_SIGNING="${TIMEVAULT_ALLOW_ADHOC_SIGNING:-0}"
+
+if [[ -z "$SIGNING_IDENTITY" ]]; then
+    AVAILABLE_IDENTITIES=$(/usr/bin/security find-identity -v -p codesigning 2>/dev/null || true)
+    SIGNING_IDENTITY=$(print -r -- "$AVAILABLE_IDENTITIES" | /usr/bin/awk -F '"' '/Developer ID Application:/ { print $2; exit }')
+    if [[ -z "$SIGNING_IDENTITY" ]]; then
+        SIGNING_IDENTITY=$(print -r -- "$AVAILABLE_IDENTITIES" | /usr/bin/awk -F '"' '/TimeVault Local/ { print $2; exit }')
+    fi
+    if [[ -z "$SIGNING_IDENTITY" ]]; then
+        SIGNING_IDENTITY=$(print -r -- "$AVAILABLE_IDENTITIES" | /usr/bin/awk -F '"' '/^[[:space:]]*[0-9]+\)/ { print $2; exit }')
+    fi
+fi
+
+if [[ ( -z "$SIGNING_IDENTITY" || "$SIGNING_IDENTITY" == "-" ) && "$ALLOW_ADHOC_SIGNING" != "1" ]]; then
+    print -u2 "A stable certificate-backed code-signing identity is required for a release DMG."
+    print -u2 "Set TIMEVAULT_CODESIGN_IDENTITY to the identity used for previous releases."
+    print -u2 "A self-signed identity such as TimeVault Local is sufficient for personal use on this Mac."
+    print -u2 "For local testing only, opt in to an ad hoc build with TIMEVAULT_ALLOW_ADHOC_SIGNING=1."
+    exit 1
+fi
+
+if [[ -z "$SIGNING_IDENTITY" ]]; then
+    SIGNING_IDENTITY="-"
+    print -u2 "Warning: building an ad hoc-signed app. macOS may require Full Disk Access approval again after an update."
+fi
+
 NPM_PREFIX="$(npm prefix --global)"
 NPM_ROOT="$(npm root --global)"
 CREATE_DMG_BIN="$NPM_PREFIX/bin/create-dmg"
@@ -65,7 +92,7 @@ OUTPUT_DMG="$OUTPUT_DIR/$DMG_NAME"
 /usr/bin/codesign \
     --force \
     --deep \
-    --sign - \
+    --sign "$SIGNING_IDENTITY" \
     "$APP_PATH"
 
 /usr/bin/codesign \

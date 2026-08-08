@@ -19,6 +19,18 @@ struct TimeVaultApp: App {
                     AboutView()
                 }
                 .tint(Color(nsColor: .controlAccentColor))
+                .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+                    viewModel.revalidateSelectedVolumeAccess()
+                    viewModel.refreshSystemOverview()
+                }
+                .onReceive(NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.didMountNotification)) { _ in
+                    viewModel.revalidateSelectedVolumeAccess()
+                    viewModel.refreshSystemOverview()
+                }
+                .onReceive(NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.didUnmountNotification)) { _ in
+                    viewModel.revalidateSelectedVolumeAccess()
+                    viewModel.refreshSystemOverview()
+                }
         }
         .windowResizability(.contentMinSize)
         .defaultSize(width: 1_880, height: 1_080)

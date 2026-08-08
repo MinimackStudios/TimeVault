@@ -38,6 +38,8 @@ To build the customized release DMG and signed automatic-update feed:
 ./Scripts/build-dmg.sh
 ```
 
+Release builds must use the same stable certificate-backed signing identity as previous releases. A Developer ID Application identity is required for notarized public distribution; a self-signed identity is suitable for local testing or controlled distribution. Set `TIMEVAULT_CODESIGN_IDENTITY` when the identity is not discoverable from the login keychain. For local packaging only, explicitly opt in to ad hoc signing with `TIMEVAULT_ALLOW_ADHOC_SIGNING=1`; macOS may ask for Full Disk Access again when an ad hoc-signed app is updated.
+
 See [`UPDATING.md`](UPDATING.md) for the complete GitHub release workflow.
 
 To compile the unit-test target without running it:
@@ -57,7 +59,12 @@ xcodebuild \
 Select a mounted backup volume through the app so macOS can grant a
 security-scoped read permission. Some backup locations also require Full Disk
 Access in System Settings under Privacy & Security. The app verifies access and
-reports failures without attempting to bypass macOS protections.
+reports failures without attempting to bypass macOS protections. Approved
+volume bookmarks are restored and their scoped access is reacquired when the
+app launches, stale bookmarks are refreshed when possible, and access is
+rechecked when the app becomes active or a drive changes. Full Disk Access is
+controlled by macOS, so it can only persist across updates when the bundle
+identifier, installation path, and signing identity remain stable.
 
 ## Software updates
 

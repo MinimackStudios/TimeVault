@@ -11,7 +11,7 @@ enum PermissionState: Sendable {
 }
 
 struct PermissionService: PermissionChecking, Sendable {
-    static let recoveryInstructions = "The selected location is not readable. Use Choose Volume to approve it, or enable Full Disk Access in System Settings > Privacy & Security if macOS still blocks access."
+    static let recoveryInstructions = "The selected location is not readable. Use Choose Volume to approve it, or enable Full Disk Access in System Settings > Privacy & Security if macOS still blocks access. If this began after an update, reinstall the consistently signed copy in Applications and approve that copy."
 
     static var fullDiskAccessSettingsURL: URL? {
         URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles")
