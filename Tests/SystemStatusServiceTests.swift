@@ -17,6 +17,22 @@ final class SystemStatusServiceTests: XCTestCase {
         XCTAssertEqual(evidence, "Found the APFS Time Machine marker on Archive.")
     }
 
+    func testDestinationInfoRecognizesCustomNamedMountedVolume() async {
+        let output = """
+        Name          : TM 25T
+        Kind          : Local
+        Mount Point   : /Volumes/TM 25T
+        ID            : 0ECF54B6-9945-487D-A2BE-F4889E5A6E48
+        """
+        let discovery = TimeMachineSnapshotDiscovery(
+            commandRunner: StubCommandRunner(result: .success(output))
+        )
+
+        let paths = await discovery.configuredDestinationPaths()
+
+        XCTAssertEqual(paths, Set(["/Volumes/TM 25T"]))
+    }
+
     func testVolumeValidationRejectsFoldersInsideAVolume() throws {
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent("TimeVaultValidation-\(UUID().uuidString)", isDirectory: true)

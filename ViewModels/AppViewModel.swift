@@ -44,18 +44,21 @@ final class AppViewModel: ObservableObject {
     @Published var localSnapshotStatus: LocalSnapshotDiscoveryStatus = .unavailable
     @Published var isRefreshingSystemOverview = false
 
-    private let discovery = TimeMachineSnapshotDiscovery()
+    private let discovery: TimeMachineSnapshotDiscovery
     private let permissions: any PermissionChecking
-    private let bookmarks = SecurityScopedBookmarkStore()
+    private let bookmarks: SecurityScopedBookmarkStore
     private let exportService = ExportService()
     private let systemStatus = SystemStatusService()
     private let comparisonOperation: ComparisonOperation
     private let logger = Logger(subsystem: "com.minimackstudios.TimeVault", category: "workflow")
     private var comparisonTask: Task<Void, Never>?
     private var activeComparisonID: UUID?
-    private var activeSecurityScopedURLs: Set<URL> = []
+    private var activeSecurityScopedURLs: [String: URL] = [:]
     private var approvedVolumeURLs: [URL] = []
+    private var configuredDestinationPaths: Set<String> = []
     private var permissionRecoveryURL: URL?
+    private var accessRevalidationTask: Task<Void, Never>?
+    private var destinationRefreshTask: Task<Void, Never>?
     private var filteredChangesCache: [FileChange] = []
     private var filteredChangesCacheIsValid = false
 
@@ -68,21 +71,32 @@ final class AppViewModel: ObservableObject {
             )
         },
         performInitialRefresh: Bool = true,
-        permissionService: any PermissionChecking = PermissionService()
+        permissionService: any PermissionChecking = PermissionService(),
+        bookmarkStore: SecurityScopedBookmarkStore = SecurityScopedBookmarkStore(),
+        snapshotDiscovery: TimeMachineSnapshotDiscovery = TimeMachineSnapshotDiscovery()
     ) {
         self.comparisonOperation = comparisonOperation
         self.permissions = permissionService
+        self.bookmarks = bookmarkStore
+        self.discovery = snapshotDiscovery
         if performInitialRefresh {
             approvedVolumeURLs = restoreApprovedVolumes()
             mountedVolumes = approvedVolumeURLs
             refreshMountedVolumes()
             refreshSystemOverview()
+            scheduleApprovedVolumeRevalidation()
         }
     }
 
     deinit {
         comparisonTask?.cancel()
-        activeSecurityScopedURLs.forEach { $0.stopAccessingSecurityScopedResource() }
+        accessRevalidationTask?.cancel()
+        destinationRefreshTask?.cancel()
+        activeSecurityScopedURLs.values.forEach { $0.stopAccessingSecurityScopedResource() }
+    }
+
+    var isWorkflowBusy: Bool {
+        isDiscovering || isComparing
     }
 
     var filteredChanges: [FileChange] {
@@ -127,9 +141,29 @@ final class AppViewModel: ObservableObject {
     }
 
     func refreshMountedVolumes() {
+        updateMountedVolumes()
+
+        destinationRefreshTask?.cancel()
+        let discovery = self.discovery
+        destinationRefreshTask = Task { [weak self] in
+            guard let destinationPaths = await discovery.configuredDestinationPaths(),
+                  !Task.isCancelled,
+                  let self else { return }
+            self.configuredDestinationPaths = destinationPaths
+            self.updateMountedVolumes()
+        }
+    }
+
+    private func updateMountedVolumes() {
         let urls = FileManager.default.mountedVolumeURLs(includingResourceValuesForKeys: [.volumeNameKey, .volumeIsRemovableKey], options: [.skipHiddenVolumes]) ?? []
+        let mountedPaths = Set(urls.map { $0.standardizedFileURL.path })
+        let approvedPaths = Set(approvedVolumeURLs.map { $0.standardizedFileURL.path })
         let candidates = Array(Set(approvedVolumeURLs + mountedVolumes + urls)).filter { volume in
-            discovery.isSidebarCandidate(volume: volume)
+            let path = volume.standardizedFileURL.path
+            guard mountedPaths.contains(path) else { return false }
+            return approvedPaths.contains(path)
+                || configuredDestinationPaths.contains(path)
+                || discovery.isSidebarCandidate(volume: volume)
         }
         mountedVolumes = candidates.sorted { $0.path < $1.path }
     }
@@ -148,6 +182,7 @@ final class AppViewModel: ObservableObject {
     }
 
     func navigate(to destination: AppSection) {
+        guard !isDiscovering else { return }
         switch destination {
         case .snapshots(let volume):
             section = destination
@@ -164,10 +199,12 @@ final class AppViewModel: ObservableObject {
     }
 
     func showSnapshotBrowser() {
+        guard !isWorkflowBusy else { return }
         navigate(to: .snapshots(selectedVolume ?? mountedVolumes.first))
     }
 
     func chooseBackupVolume() {
+        guard !isWorkflowBusy else { return }
         let panel = NSOpenPanel()
         panel.title = "Choose Time Machine Backup Volume"
         panel.message = "Choose a mounted, read-only Time Machine backup volume."
@@ -183,28 +220,36 @@ final class AppViewModel: ObservableObject {
     }
 
     func openFullDiskAccessSettings() {
+        guard !isWorkflowBusy else { return }
         guard let url = PermissionService.fullDiskAccessSettingsURL else { return }
         NSWorkspace.shared.open(url)
     }
 
     func recheckSelectedVolumeAccess() {
+        guard !isWorkflowBusy else { return }
+        revalidateStoredVolumeAccess()
         guard let accessTarget = permissionRecoveryURL ?? selectedVolume else { return }
         guard verifyReadAccess(to: accessTarget) else { return }
+        rememberSelectedVolumeIfApproved()
         discoverSnapshots()
     }
 
     func revalidateSelectedVolumeAccess() {
+        revalidateStoredVolumeAccess()
         refreshMountedVolumes()
+        defer { scheduleApprovedVolumeRevalidation() }
         guard let selectedVolume else { return }
         let accessTarget = permissionRecoveryURL ?? selectedVolume
         let wasInaccessible = shouldShowPermissionRecovery
         guard verifyReadAccess(to: accessTarget) else { return }
+        rememberSelectedVolumeIfApproved()
         if (wasInaccessible || snapshots.isEmpty) && !isDiscovering {
             discoverSnapshots()
         }
     }
 
     func chooseFolderSnapshot(isOlder: Bool) {
+        guard !isWorkflowBusy else { return }
         let panel = NSOpenPanel()
         panel.title = isOlder ? "Choose Older Snapshot Folder" : "Choose Newer Snapshot Folder"
         panel.message = "Choose a folder representing a snapshot. Access is read-only."
@@ -229,6 +274,7 @@ final class AppViewModel: ObservableObject {
     }
 
     func selectSnapshot(_ snapshot: BackupSnapshot?, as role: SnapshotRole) {
+        guard !isDiscovering else { return }
         switch role {
         case .older:
             olderSnapshot = snapshot
@@ -244,7 +290,7 @@ final class AppViewModel: ObservableObject {
     }
 
     func discoverSnapshots() {
-        guard let selectedVolume else { return }
+        guard let selectedVolume, !isWorkflowBusy else { return }
         isDiscovering = true
         errorMessage = nil
         diagnostics = nil
@@ -263,6 +309,7 @@ final class AppViewModel: ObservableObject {
     }
 
     func selectVolume(_ url: URL) {
+        guard !isWorkflowBusy else { return }
         beginSecurityScopedAccess(for: url)
         selectedVolume = url
         refreshMountedVolumes()
@@ -275,12 +322,13 @@ final class AppViewModel: ObservableObject {
             if case .inaccessible = permissionState { return url }
             return nil
         }()
-        if case .verified = permissionState, discovery.isSidebarCandidate(volume: url) {
+        if discovery.validate(volume: url).isCandidate {
             rememberApprovedVolume(url)
         }
     }
 
     func compareSnapshots() {
+        guard !isDiscovering else { return }
         guard let olderSnapshot, let newerSnapshot else {
             errorMessage = "Choose both an older and a newer snapshot first."
             return
@@ -400,11 +448,29 @@ final class AppViewModel: ObservableObject {
     }
 
     private func restoreApprovedVolumes() -> [URL] {
-        let restoredBookmarks = bookmarks.restoreEntries()
-        restoredBookmarks.forEach { bookmark in
-            beginSecurityScopedAccess(for: bookmark.url)
+        var restoredURLs: [URL] = []
+        for bookmark in bookmarks.restoreEntries() {
+            let normalizedURL = bookmark.url.standardizedFileURL
+            if !restoredURLs.contains(normalizedURL) {
+                restoredURLs.append(normalizedURL)
+            }
+            beginSecurityScopedAccess(for: bookmark.scopedURL)
         }
-        return restoredBookmarks.map(\.url)
+        return restoredURLs.sorted { $0.path < $1.path }
+    }
+
+    private func revalidateStoredVolumeAccess() {
+        for url in approvedVolumeURLs {
+            beginSecurityScopedAccess(for: url)
+        }
+
+        for bookmark in bookmarks.restoreEntries() {
+            let normalizedURL = bookmark.url.standardizedFileURL
+            if !approvedVolumeURLs.contains(normalizedURL) {
+                approvedVolumeURLs.append(normalizedURL)
+            }
+            beginSecurityScopedAccess(for: bookmark.scopedURL)
+        }
     }
 
     private func rememberApprovedVolume(_ url: URL) {
@@ -412,16 +478,38 @@ final class AppViewModel: ObservableObject {
         if !approvedVolumeURLs.contains(normalizedURL) {
             approvedVolumeURLs.append(normalizedURL)
         }
-        try? bookmarks.save(url: normalizedURL)
+        try? bookmarks.save(url: url)
+        updateMountedVolumes()
+    }
+
+    private func rememberSelectedVolumeIfApproved() {
+        guard let selectedVolume,
+              discovery.validate(volume: selectedVolume).isCandidate else { return }
+        rememberApprovedVolume(selectedVolume)
     }
 
     @discardableResult
     private func beginSecurityScopedAccess(for url: URL) -> Bool {
         let normalizedURL = url.standardizedFileURL
-        guard !activeSecurityScopedURLs.contains(normalizedURL) else { return true }
-        guard normalizedURL.startAccessingSecurityScopedResource() else { return false }
-        activeSecurityScopedURLs.insert(normalizedURL)
+        let key = normalizedURL.path
+        guard activeSecurityScopedURLs[key] == nil else { return true }
+        guard url.startAccessingSecurityScopedResource() else { return false }
+        activeSecurityScopedURLs[key] = url
         return true
+    }
+
+    private func scheduleApprovedVolumeRevalidation() {
+        accessRevalidationTask?.cancel()
+        accessRevalidationTask = Task { [weak self] in
+            do {
+                try await Task.sleep(nanoseconds: 500_000_000)
+            } catch {
+                return
+            }
+            guard !Task.isCancelled, let self else { return }
+            self.revalidateStoredVolumeAccess()
+            self.refreshMountedVolumes()
+        }
     }
 
     @discardableResult

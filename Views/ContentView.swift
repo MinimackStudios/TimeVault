@@ -30,6 +30,8 @@ struct ContentView: View {
             }
         }
         .navigationSplitViewStyle(.balanced)
+        .disabled(viewModel.isDiscovering)
+        .scrollDisabled(viewModel.isWorkflowBusy)
     }
 }
 

@@ -45,7 +45,7 @@ struct TimeVaultApp: App {
                 Button("Check for Updates…") {
                     updateController.checkForUpdates()
                 }
-                .disabled(!updateController.canCheckForUpdates)
+                .disabled(viewModel.isWorkflowBusy || !updateController.canCheckForUpdates)
             }
         }
         Settings {

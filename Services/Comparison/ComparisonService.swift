@@ -22,6 +22,15 @@ struct ComparisonService: Sendable {
         async let newerScan = scan(snapshot: newerSnapshot, label: "Newer snapshot", coordinator: coordinator, progress: reportProgress)
         let (old, new) = try await (olderScan, newerScan)
         try Task.checkCancellation()
+        await reportProgress(ScanProgress(
+            phase: "Comparing changes",
+            rootName: "Both snapshots",
+            itemsScanned: 0,
+            estimatedItemCount: nil,
+            elapsedTime: Date().timeIntervalSince(started),
+            itemsPerSecond: 0,
+            startedAt: started
+        ))
         let comparison = try await engine.compare(
             older: old.records,
             newer: new.records,

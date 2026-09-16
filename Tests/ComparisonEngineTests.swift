@@ -37,6 +37,23 @@ final class ComparisonEngineTests: XCTestCase {
         XCTAssertEqual(comparison.changes.first(where: { $0.relativePath == "folder" })?.kind, .folderContentsChanged)
     }
 
+    func testComparisonReportsDeterminateProgressDuringPathComparison() async throws {
+        let collector = ProgressCollector()
+        _ = try await ComparisonEngine().compare(
+            older: [metadata("old.txt")],
+            newer: [metadata("new.txt")],
+            olderSnapshot: snapshot("old"),
+            newerSnapshot: snapshot("new"),
+            duration: 0,
+            progress: { value in await collector.append(value) }
+        )
+
+        let values = await collector.values
+        XCTAssertTrue(values.contains { $0.phase == "Comparing changes" && $0.hasDeterminateComparisonProgress })
+        XCTAssertTrue(values.contains { $0.phase == "Preparing results" && $0.hasDeterminateComparisonProgress })
+        XCTAssertFalse(values.contains { $0.phase == "Scanning" && $0.hasDeterminateComparisonProgress })
+    }
+
     func testPathNormalization() {
         XCTAssertEqual(PathNormalizer.normalize("./Documents/../Documents/file.txt"), "Documents/file.txt")
         XCTAssertEqual(PathNormalizer.normalize("a//b/./c"), "a/b/c")
@@ -244,5 +261,13 @@ final class ComparisonEngineTests: XCTestCase {
 
     private func snapshot(_ name: String) -> BackupSnapshot {
         BackupSnapshot(date: Date(), backupVolume: name, url: URL(fileURLWithPath: "/tmp/\(name)"))
+    }
+}
+
+private actor ProgressCollector {
+    private(set) var values: [ScanProgress] = []
+
+    func append(_ value: ScanProgress) {
+        values.append(value)
     }
 }

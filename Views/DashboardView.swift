@@ -19,7 +19,7 @@ struct DashboardView: View {
                     Button("Refresh", systemImage: "arrow.clockwise") {
                         viewModel.refreshSystemOverview()
                     }
-                    .disabled(viewModel.isRefreshingSystemOverview)
+                    .disabled(viewModel.isRefreshingSystemOverview || viewModel.isWorkflowBusy)
                 }
 
                 if let overview = viewModel.systemOverview {

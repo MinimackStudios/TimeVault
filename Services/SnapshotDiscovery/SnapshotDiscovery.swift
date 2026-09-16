@@ -11,6 +11,45 @@ struct VolumeValidation: Sendable {
 }
 
 struct TimeMachineSnapshotDiscovery: SnapshotDiscoveryStrategy {
+    private let commandRunner: any SystemCommandRunning
+
+    init(commandRunner: any SystemCommandRunning = SystemCommandRunner()) {
+        self.commandRunner = commandRunner
+    }
+
+    func configuredDestinationPaths() async -> Set<String>? {
+        guard let output = try? await commandRunner.run(
+            "/usr/bin/tmutil",
+            arguments: ["destinationinfo"]
+        ) else {
+            return nil
+        }
+        return Self.destinationMountPoints(in: output)
+    }
+
+    static func destinationMountPoints(in output: String) -> Set<String> {
+        output
+            .split(whereSeparator: \.isNewline)
+            .compactMap { line -> String? in
+                guard let separator = line.firstIndex(of: ":") else { return nil }
+                let key = String(line[..<separator]).trimmingCharacters(in: .whitespacesAndNewlines)
+                guard key.caseInsensitiveCompare("Mount Point") == .orderedSame else { return nil }
+
+                let valueStart = line.index(after: separator)
+                let value = String(line[valueStart...]).trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !value.isEmpty else { return nil }
+
+                if let url = URL(string: value), url.isFileURL {
+                    return url.standardizedFileURL.path
+                }
+                guard value.hasPrefix("/") else { return nil }
+                return URL(fileURLWithPath: value).standardizedFileURL.path
+            }
+            .reduce(into: Set<String>()) { paths, path in
+                paths.insert(path)
+            }
+    }
+
     func validate(volume: URL) -> VolumeValidation {
         let fileManager = FileManager.default
         let standardizedVolume = volume.standardizedFileURL

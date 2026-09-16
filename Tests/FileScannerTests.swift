@@ -91,6 +91,26 @@ final class FileScannerTests: XCTestCase {
     }
 
     @MainActor
+    func testDiscoveryLocksNavigationAndSnapshotSelection() {
+        let viewModel = AppViewModel(performInitialRefresh: false)
+        let snapshot = testSnapshot(identifier: "snapshot", timestamp: 100)
+
+        viewModel.isDiscovering = true
+        viewModel.navigate(to: .comparison)
+        viewModel.selectSnapshot(snapshot, as: .older)
+
+        XCTAssertTrue(viewModel.isWorkflowBusy)
+        XCTAssertEqual(viewModel.section, .dashboard)
+        XCTAssertNil(viewModel.olderSnapshot)
+
+        viewModel.isDiscovering = false
+        viewModel.selectSnapshot(snapshot, as: .older)
+
+        XCTAssertFalse(viewModel.isWorkflowBusy)
+        XCTAssertEqual(viewModel.olderSnapshot, snapshot)
+    }
+
+    @MainActor
     func testMovingSnapshotToOtherRoleClearsConflictingRole() {
         let viewModel = AppViewModel(performInitialRefresh: false)
         let snapshot = testSnapshot(identifier: "snapshot", timestamp: 100)

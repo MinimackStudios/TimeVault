@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct SnapshotSelectionView: View {
@@ -32,6 +33,7 @@ struct SnapshotSelectionView: View {
                     }
                     .pickerStyle(.menu)
                     .accessibilityLabel("Snapshot order")
+                    .disabled(viewModel.isWorkflowBusy)
                 }
 
                 if case .inaccessible(let detail) = viewModel.permissionState {
@@ -77,6 +79,7 @@ struct SnapshotSelectionView: View {
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel(localSnapshotsExpanded ? "Collapse local snapshots" : "Expand local snapshots")
+                    .disabled(viewModel.isWorkflowBusy)
 
                     if localSnapshotsExpanded {
                         Group {
@@ -119,6 +122,7 @@ struct SnapshotSelectionView: View {
                                                 showsAllLocalSnapshots.toggle()
                                             }
                                             .buttonStyle(.borderless)
+                                            .disabled(viewModel.isWorkflowBusy)
                                         }
                                     }
                                 }
@@ -189,7 +193,7 @@ struct SnapshotSelectionView: View {
                     if !viewModel.isComparing {
                         Button("Compare", systemImage: "arrow.left.and.right") { viewModel.compareSnapshots() }
                             .buttonStyle(.borderedProminent)
-                            .disabled(viewModel.olderSnapshot == nil || viewModel.newerSnapshot == nil)
+                            .disabled(viewModel.olderSnapshot == nil || viewModel.newerSnapshot == nil || viewModel.isWorkflowBusy)
                     }
                 }
 
@@ -213,37 +217,14 @@ struct SnapshotSelectionView: View {
                                             .lineLimit(1)
                                     }
                                     Spacer()
-Button {
-    selectedSnapshotURL = snapshot.url.standardizedFileURL
-    viewModel.selectSnapshot(snapshot, as: .older)
-} label: {
-    Text("Use older")
-        .font(.callout.weight(.medium))
-        .foregroundStyle(.blue)
-        .padding(.horizontal, 10)
-        .padding(.vertical, 5)
-        .background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 5))
-}
-.buttonStyle(.plain)
-.disabled(viewModel.isComparing || viewModel.isDiscovering)
-Button {
-    selectedSnapshotURL = snapshot.url.standardizedFileURL
-    viewModel.selectSnapshot(snapshot, as: .newer)
-} label: {
-    Text("Use newer")
-        .font(.callout.weight(.medium))
-        .foregroundStyle(.blue)
-        .padding(.horizontal, 10)
-        .padding(.vertical, 5)
-        .background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 5))
-}
-.buttonStyle(.plain)
-.disabled(viewModel.isComparing || viewModel.isDiscovering)
+                                    snapshotRoleButton(title: "Use older", snapshot: snapshot, role: .older)
+                                    snapshotRoleButton(title: "Use newer", snapshot: snapshot, role: .newer)
                                 }
                                 .padding(.vertical, 8)
                                 .padding(.horizontal, 6)
                                 .contentShape(Rectangle())
                                 .onTapGesture { selectedSnapshotURL = snapshot.url.standardizedFileURL }
+                                .disabled(viewModel.isWorkflowBusy)
                                 .background(isSelected(snapshot) ? Color.accentColor : Color.clear, in: RoundedRectangle(cornerRadius: 7))
                                 if snapshot.id != sortedBackupSnapshots.last?.id {
                                     Divider()
@@ -282,6 +263,29 @@ Button {
                 return left.date > right.date
             }
         }
+    }
+
+    private func snapshotRoleButton(
+        title: String,
+        snapshot: BackupSnapshot,
+        role: AppViewModel.SnapshotRole
+    ) -> some View {
+        Button {
+            selectedSnapshotURL = snapshot.url.standardizedFileURL
+            viewModel.selectSnapshot(snapshot, as: role)
+        } label: {
+            Text(title)
+                .font(.callout.weight(.medium))
+                .foregroundStyle(isSelected(snapshot) ? Color(nsColor: .labelColor) : Color.accentColor)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(
+                    Color(nsColor: .controlBackgroundColor).opacity(0.92),
+                    in: RoundedRectangle(cornerRadius: 5)
+                )
+        }
+        .buttonStyle(.plain)
+        .disabled(viewModel.isComparing || viewModel.isDiscovering)
     }
 
     private var sortedLocalSnapshots: [LocalSnapshot] {
@@ -381,7 +385,7 @@ private struct ScanProgressPanel: View {
 
                     if showDetailedScanProgress, let progress {
                         HStack(spacing: 16) {
-                            ProgressMetric(title: progress.phase == "Comparing changes" ? "Paths compared" : "Items scanned", value: progress.itemsScanned.formatted())
+                            ProgressMetric(title: progress.usesPathProgress ? "Paths compared" : "Items scanned", value: progress.itemsScanned.formatted())
                             ProgressMetric(title: "Rate", value: "\(progress.itemsPerSecond.formatted(.number.precision(.fractionLength(0))))/s")
                             ProgressMetric(title: "Elapsed", value: "\(elapsedTime(for: progress, at: context.date).formatted(.number.precision(.fractionLength(1))))s")
                         }
@@ -406,7 +410,7 @@ private struct ScanProgressPanel: View {
     private func accessibilitySummary(at date: Date) -> String {
         guard let progress else { return "Preparing comparison" }
 
-        let itemLabel = progress.phase == "Comparing changes" ? "paths compared" : "items scanned"
+        let itemLabel = progress.usesPathProgress ? "paths compared" : "items scanned"
         let elapsed = elapsedTime(for: progress, at: date)
             .formatted(.number.precision(.fractionLength(1)))
         let rate = progress.itemsPerSecond
@@ -414,14 +418,16 @@ private struct ScanProgressPanel: View {
         var summary = "\(progress.phase), \(progress.rootName). \(progress.itemsScanned.formatted()) \(itemLabel). Rate \(rate) per second. Elapsed \(elapsed) seconds."
         if let estimatedItemCount = progress.estimatedItemCount, estimatedItemCount > 0 {
             let completed = min(progress.itemsScanned, estimatedItemCount)
-            summary += " \(completed.formatted()) of \(estimatedItemCount.formatted()) estimated items."
+            let estimateLabel = progress.usesPathProgress ? "estimated paths" : "estimated items"
+            summary += " \(completed.formatted()) of \(estimatedItemCount.formatted()) \(estimateLabel)."
         }
         return summary
     }
 
     @ViewBuilder
     private var scanProgressBar: some View {
-        if let progress, let estimatedItemCount = progress.estimatedItemCount, estimatedItemCount > 0 {
+        if let progress, progress.hasDeterminateComparisonProgress,
+           let estimatedItemCount = progress.estimatedItemCount {
             ProgressView(
                 value: min(Double(progress.itemsScanned), Double(estimatedItemCount)),
                 total: Double(estimatedItemCount)
@@ -429,12 +435,14 @@ private struct ScanProgressPanel: View {
             .progressViewStyle(.linear)
             .tint(.accentColor)
             .accessibilityLabel("Comparison progress")
-            .accessibilityValue("\(progress.itemsScanned) of \(estimatedItemCount) items")
+            .accessibilityValue("\(progress.itemsScanned) of \(estimatedItemCount) \(progress.usesPathProgress ? "paths" : "items")")
         } else {
-            ProgressView()
-                .progressViewStyle(.linear)
-                .tint(.accentColor)
-                .accessibilityLabel("Comparison scan in progress")
+            Text(activityDescription(for: progress))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .accessibilityLabel("Comparison progress")
+                .accessibilityValue(activityDescription(for: progress))
         }
     }
 
@@ -445,8 +453,23 @@ private struct ScanProgressPanel: View {
 
         let completed = min(progress.itemsScanned, estimatedItemCount)
         let percentage = (Double(completed) / Double(estimatedItemCount)).formatted(.percent.precision(.fractionLength(0)))
-        let itemLabel = progress.phase == "Comparing changes" ? "paths compared" : "items scanned"
+        let itemLabel = progress.usesPathProgress ? "paths compared" : "items scanned"
         return "\(completed.formatted()) of \(estimatedItemCount.formatted()) \(itemLabel) (\(percentage))"
+    }
+
+    private func activityDescription(for progress: ScanProgress?) -> String {
+        guard let progress else { return "Preparing comparison..." }
+        switch progress.phase {
+        case "Preparing comparison":
+            return "Waiting for both snapshot scans to finish..."
+        case "Scanning":
+            return "Scanning snapshot contents..."
+        default:
+            if progress.phase.hasPrefix("Waiting for") {
+                return "Finishing the other snapshot scan..."
+            }
+            return "Preparing comparison..."
+        }
     }
 }
 

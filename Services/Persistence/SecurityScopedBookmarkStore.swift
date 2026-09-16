@@ -3,6 +3,7 @@ import Foundation
 struct RestoredSecurityScopedBookmark: Sendable, Equatable {
     let url: URL
     let wasStale: Bool
+    let scopedURL: URL
 }
 
 struct SecurityScopedBookmarkStore {
@@ -15,7 +16,7 @@ struct SecurityScopedBookmarkStore {
 
     func save(url: URL) throws {
         let normalizedURL = url.standardizedFileURL
-        let data = try makeBookmarkData(for: normalizedURL)
+        let data = try makeBookmarkData(for: url)
         var values = storedValues()
         values = values.filter { storedPath, _ in
             URL(fileURLWithPath: storedPath).standardizedFileURL != normalizedURL
@@ -50,11 +51,15 @@ struct SecurityScopedBookmarkStore {
             let normalizedURL = url.standardizedFileURL
             let normalizedPath = normalizedURL.path
             guard restoredPaths.insert(normalizedPath).inserted else { continue }
-            restored.append(RestoredSecurityScopedBookmark(url: normalizedURL, wasStale: stale))
+            // Keep the resolved URL separately for access calls. Its security
+            // scope is attached to that URL, so normalizing it before
+            // startAccessingSecurityScopedResource() can lose the scope on some
+            // mounted volumes.
+            restored.append(RestoredSecurityScopedBookmark(url: normalizedURL, wasStale: stale, scopedURL: url))
 
             migratedValues.removeValue(forKey: storedPath)
-            if let refreshedData = stale ? try? makeBookmarkData(for: normalizedURL) : data {
-                migratedValues[storageKey(for: normalizedURL)] = refreshedData
+            if let refreshedData = stale ? try? makeBookmarkData(for: url) : data {
+                migratedValues[storageKey(for: url)] = refreshedData
             } else {
                 migratedValues[storedPath] = data
             }

@@ -66,6 +66,10 @@ rechecked when the app becomes active or a drive changes. Full Disk Access is
 controlled by macOS, so it can only persist across updates when the bundle
 identifier, installation path, and signing identity remain stable.
 
+Configured Time Machine destinations are matched by their mount point through
+`tmutil destinationinfo`, not by a required volume name. Explicitly approved
+mounted volumes are also retained in the sidebar for later sessions.
+
 ## Software updates
 
 TimeVault uses Sparkle 2 for native automatic updates. It checks once per day
@@ -79,6 +83,10 @@ APFS Time Machine paths exposed by the file system or `tmutil`. macOS does not
 provide one public API that exposes every Time Machine implementation, so
 discovery can be limited by permissions, encryption, volume state, or changes
 in internal backup layout.
+
+Snapshot discovery locks navigation, scrolling, and settings until it finishes
+or fails. Comparison cancellation remains available while a comparison is in
+progress.
 
 The app compares logical file metadata. Logical bytes are not a measurement of
 physical space consumed on the backup disk because hard links, APFS clones,

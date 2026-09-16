@@ -1,4 +1,8 @@
 {
+  "features" : [
+    "refractivity",
+    "specular-location"
+  ],
   "fill" : {
     "linear-gradient" : [
       "display-p3:0.99864,0.99999,1.00000,1.00000",
@@ -17,13 +21,16 @@
   },
   "groups" : [
     {
+      "blur-material" : null,
       "hidden" : false,
       "layers" : [
         {
+          "glass" : true,
           "image-name" : "Group.svg",
           "name" : "Group"
         }
       ],
+      "lighting" : "individual",
       "name" : "Utility",
       "position" : {
         "scale" : 1.27,
@@ -32,13 +39,19 @@
           0
         ]
       },
+      "refractivity" : {
+        "depth" : 0,
+        "enabled" : true,
+        "strength" : 0.5
+      },
       "shadow" : {
         "kind" : "neutral",
-        "opacity" : 0.5
+        "opacity" : 0.54
       },
+      "specular" : "outside",
       "translucency" : {
         "enabled" : true,
-        "value" : 0.5
+        "value" : 0.28
       }
     },
     {
@@ -50,8 +63,8 @@
             {
               "value" : {
                 "linear-gradient" : [
-                  "display-p3:0.49024,0.79981,0.76138,1.00000",
-                  "display-p3:0.43840,0.68639,0.65981,1.00000"
+                  "display-p3:0.35997,0.78632,0.73607,1.00000",
+                  "display-p3:0.33628,0.73063,0.68490,1.00000"
                 ],
                 "orientation" : {
                   "start" : {
@@ -69,8 +82,8 @@
               "appearance" : "dark",
               "value" : {
                 "linear-gradient" : [
-                  "display-p3:0.50653,0.79950,0.77144,1.00000",
-                  "display-p3:0.21265,0.44811,0.41557,1.00000"
+                  "display-p3:0.24550,0.79305,0.73589,1.00000",
+                  "display-p3:0.21878,0.73134,0.68484,1.00000"
                 ]
               }
             }
@@ -90,7 +103,7 @@
       ],
       "shadow" : {
         "kind" : "layer-color",
-        "opacity" : 0.79
+        "opacity" : 0.5
       },
       "translucency" : {
         "enabled" : false,

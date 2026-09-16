@@ -21,6 +21,8 @@ struct SettingsView: View {
         }
         .tabViewStyle(.automatic)
         .frame(minWidth: 720, idealWidth: 720, minHeight: 500, idealHeight: 500)
+        .disabled(viewModel.isWorkflowBusy)
+        .scrollDisabled(viewModel.isWorkflowBusy)
     }
 }
 

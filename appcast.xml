@@ -3,22 +3,23 @@
     <channel>
         <title>TimeVault</title>
         <item>
-            <title>1.0.4</title>
-            <pubDate>Sat, 08 Aug 2026 11:47:33 -0600</pubDate>
+            <title>1.0.5</title>
+            <pubDate>Wed, 16 Sep 2026 10:05:15 -0600</pubDate>
             <link>https://github.com/MinimackStudios/TimeVault</link>
             <sparkle:fullReleaseNotesLink>https://github.com/MinimackStudios/TimeVault/releases</sparkle:fullReleaseNotesLink>
-            <sparkle:version>1.0.4.1</sparkle:version>
-            <sparkle:shortVersionString>1.0.4</sparkle:shortVersionString>
+            <sparkle:version>1.0.5.1</sparkle:version>
+            <sparkle:shortVersionString>1.0.5</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <description sparkle:format="markdown"><![CDATA[# What’s New in TimeVault 1.0.4
+            <description sparkle:format="markdown"><![CDATA[# What’s New in TimeVault 1.0.5
 
-- Approved backup-volume access is restored more reliably when TimeVault launches or becomes active again.
-- Security-scoped bookmarks are refreshed when stale, deduplicated, and revalidated when backup drives mount or unmount.
-- Full Disk Access recovery now gives clearer guidance when an update was installed with a different signing identity.
-- Release packaging now requires a stable certificate-backed signing identity so macOS can recognize signed updates consistently.
+- The app icon now aligns with the new Time Machine icon introduced in macOS 27.
+- Custom-named Time Machine destinations are recognized from their configured mount points instead of relying on a literal volume name.
+- Approved backup-volume access and security-scoped bookmarks are revalidated more reliably when the app launches or volumes change.
+- Navigation, settings, and snapshot selection are locked while discovery or comparison work is running, while comparison cancellation remains available.
+- Comparison progress becomes determinate once TimeVault is actively comparing snapshot paths.
 ]]></description>
-            <enclosure url="https://github.com/MinimackStudios/TimeVault/releases/download/v1.0.4/TimeVault.dmg" length="4080888" type="application/octet-stream" sparkle:edSignature="0sJe+RRTvduPH9qRsr6IDmGAvImnl5KC0JHiVjNp2xT1dVhcFxlUZtkw/jXfY+F4WdYwG1UWhoX9oclYThdUCQ=="/>
+            <enclosure url="https://github.com/MinimackStudios/TimeVault/releases/download/v1.0.5/TimeVault.dmg" length="4287909" type="application/octet-stream" sparkle:edSignature="ZBbylTTt+cLfwSmix+pDWZY08sR6Jbzlqi9SA5r+ys/2k5fU5ub5Z0j8QyqFzM4GzBo0sI9CH7WGjPVomAERAw=="/>
         </item>
     </channel>
 </rss>

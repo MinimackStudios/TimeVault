@@ -92,4 +92,12 @@ struct ScanProgress: Sendable {
     let elapsedTime: TimeInterval
     let itemsPerSecond: Double
     let startedAt: Date?
+
+    var usesPathProgress: Bool {
+        phase == "Comparing changes" || phase == "Preparing results"
+    }
+
+    var hasDeterminateComparisonProgress: Bool {
+        usesPathProgress && (estimatedItemCount ?? 0) > 0
+    }
 }
