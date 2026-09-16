@@ -4,10 +4,10 @@
         <title>TimeVault</title>
         <item>
             <title>1.0.5</title>
-            <pubDate>Wed, 16 Sep 2026 10:05:15 -0600</pubDate>
+            <pubDate>Wed, 16 Sep 2026 13:29:12 -0600</pubDate>
             <link>https://github.com/MinimackStudios/TimeVault</link>
             <sparkle:fullReleaseNotesLink>https://github.com/MinimackStudios/TimeVault/releases</sparkle:fullReleaseNotesLink>
-            <sparkle:version>1.0.5.1</sparkle:version>
+            <sparkle:version>1.0.5.2</sparkle:version>
             <sparkle:shortVersionString>1.0.5</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
@@ -19,7 +19,7 @@
 - Navigation, settings, and snapshot selection are locked while discovery or comparison work is running, while comparison cancellation remains available.
 - Comparison progress becomes determinate once TimeVault is actively comparing snapshot paths.
 ]]></description>
-            <enclosure url="https://github.com/MinimackStudios/TimeVault/releases/download/v1.0.5/TimeVault.dmg" length="4287909" type="application/octet-stream" sparkle:edSignature="ZBbylTTt+cLfwSmix+pDWZY08sR6Jbzlqi9SA5r+ys/2k5fU5ub5Z0j8QyqFzM4GzBo0sI9CH7WGjPVomAERAw=="/>
+            <enclosure url="https://github.com/MinimackStudios/TimeVault/releases/download/v1.0.5/TimeVault.dmg" length="4100225" type="application/octet-stream" sparkle:edSignature="50TKAeGQfMCVMi6g0N4ou3OqFMGeQqkwD83f3bbC2HFwB14vkb4s7k/zeQbyynlRRQQlNXs4tgYSq3cRTz8RDA=="/>
         </item>
     </channel>
 </rss>
